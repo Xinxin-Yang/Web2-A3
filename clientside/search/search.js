@@ -21,7 +21,7 @@ class SearchPage {
     async init() {
         await this.loadCategories();
         this.setupEventListeners();
-        this.setMinDate();
+        // No date restrictions - allow selecting any date
     }
 
     async loadCategories() {
@@ -68,14 +68,6 @@ class SearchPage {
             this.clearButton.addEventListener('click', () => {
                 this.clearFilters();
             });
-        }
-    }
-
-    setMinDate() {
-        const dateInput = document.getElementById('date');
-        if (dateInput) {
-            const today = new Date().toISOString().split('T')[0];
-            dateInput.min = today;
         }
     }
 
@@ -133,19 +125,27 @@ class SearchPage {
         const formattedPrice = event.ticket_price > 0 ? 
             CharityEventsApp.formatCurrency(event.ticket_price) : 'Free';
         const progress = CharityEventsApp.calculateProgress(event.current_amount, event.goal_amount);
+        const isPastEvent = !CharityEventsApp.isEventUpcoming(event.date_time);
+        const statusBadge = isPastEvent ? 
+            '<span class="event-status past">Completed</span>' : 
+            '<span class="event-status upcoming">Active</span>';
         const emoji = this.getEventEmoji(event.category_name);
 
         return `
-            <div class="result-card" data-event-id="${event.id}">
+            <div class="result-card ${isPastEvent ? 'past-event' : ''}" data-event-id="${event.id}">
                 <div class="result-image">
                     ${emoji}
                 </div>
                 <div class="result-content">
-                    <span class="result-category">${event.category_name || 'Uncategorized'}</span>
+                    <div class="result-header">
+                        <span class="result-category">${event.category_name || 'Uncategorized'}</span>
+                        ${statusBadge}
+                    </div>
                     <h3 class="result-title">${event.name || 'Untitled Event'}</h3>
                     <div class="result-date">
                         <span>📅</span>
                         ${formattedDate}
+                        ${isPastEvent ? ' (Completed)' : ''}
                     </div>
                     <div class="result-location">
                         <span>📍</span>
@@ -227,7 +227,6 @@ class SearchPage {
         };
         
         if (key === 'category_id') {
-            // Safely get category name
             try {
                 const optionElement = document.querySelector(`#category-id option[value="${value}"]`);
                 const categoryName = optionElement ? optionElement.textContent : value;
@@ -242,7 +241,6 @@ class SearchPage {
     }
 
     addResultEventListeners() {
-        // Add click listeners to result cards
         document.querySelectorAll('.result-card').forEach(card => {
             card.addEventListener('click', (e) => {
                 if (!e.target.classList.contains('view-details-btn') && 
@@ -257,12 +255,10 @@ class SearchPage {
     static removeFilter(filterKey) {
         const searchPage = window.searchPageInstance;
         if (searchPage) {
-            // Clear the specific filter
             const input = document.querySelector(`[name="${filterKey}"]`);
             if (input) {
                 input.value = '';
             }
-            // Perform search again
             searchPage.performSearch();
         }
     }
@@ -308,7 +304,6 @@ class SearchPage {
         }
     }
 
-    // Message display methods
     showLoading() {
         if (this.loadingMessage) this.loadingMessage.classList.remove('hidden');
         this.hideMessages();
