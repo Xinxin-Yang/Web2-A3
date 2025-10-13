@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Charity Events - Home</title>
+    <!-- 使用相对于根目录的路径 -->
+    <link rel="stylesheet" href="/home/home.css">
+    <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+    <!-- 动态内容将由 JavaScript 填充 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h1>❤️ Charity Events</h1>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="/" class="nav-link active">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/search" class="nav-link">Search Events</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-content">
+            <h1>Make a Difference Together</h1>
+            <p>Join our community in supporting meaningful causes through exciting charity events</p>
+            <a href="/search" class="cta-button">Find Events</a>
+        </div>
+    </header>
+
+    <section class="org-info">
+        <div class="container">
+            <h2>About Our Charity Organization</h2>
+            <div class="org-content">
+                <div class="org-text">
+                    <p>We are a non-profit organization dedicated to making positive changes in our community through various charitable initiatives and events.</p>
+                    <p>Our mission is to connect generous individuals with meaningful causes, creating opportunities for everyone to contribute to a better world.</p>
+                    <div class="contact-info">
+                        <h3>Contact Us</h3>
+                        <p>📧 Email: info@charityevents.org</p>
+                        <p>📞 Phone: (02) 1234 5678</p>
+                        <p>📍 Address: 123 Charity Street, Sydney NSW 2000</p>
+                    </div>
+                </div>
+                <div class="org-stats">
+                    <div class="stat">
+                        <h3>50+</h3>
+                        <p>Events Hosted</p>
+                    </div>
+                    <div class="stat">
+                        <h3>$500K+</h3>
+                        <p>Funds Raised</p>
+                    </div>
+                    <div class="stat">
+                        <h3>10K+</h3>
+                        <p>Participants</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 动态事件列表 -->
+    <section class="events-section">
+        <div class="container">
+            <h2>Upcoming Charity Events</h2>
+            <p class="section-subtitle">Join us in making a difference</p>
+            
+            <div id="events-container" class="events-grid">
+                <!-- 动态内容由 home.js 填充 -->
+            </div>
+            
+            <div id="loading-message" class="loading">
+                <div class="spinner"></div>
+                <p>Loading upcoming events...</p>
+            </div>
+            
+            <div id="error-message" class="error-message hidden">
+                <h3>⚠️ Unable to load events</h3>
+                <p>Please check your connection and try again.</p>
+                <button onclick="location.reload()" class="retry-button">Retry</button>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Charity Events. Making the world a better place, one event at a time.</p>
+        </div>
+    </footer>
+
+    <!-- 动态脚本 -->
+    <script src="/app.js"></script>
+    <script src="/home/home.js"></script>
+</body>
+</html>

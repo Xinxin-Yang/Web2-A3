@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Details - Charity Events</title>
+    <link rel="stylesheet" href="/event-details/event-details.css">
+    <link rel="stylesheet" href="../app.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h1>❤️ Charity Events</h1>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="/" class="nav-link">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/search" class="nav-link">Search Events</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Event Details Section -->
+    <main class="event-details">
+        <div class="container">
+            <!-- Back Button -->
+            <div class="back-nav">
+                <button onclick="EventDetailsPage.goBack()" class="back-button">
+                    ← Back to Events
+                </button>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loading-message" class="loading">
+                <div class="spinner"></div>
+                <p>Loading event details...</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="error-message" class="error-message hidden">
+                <h3>⚠️ Event Not Found</h3>
+                <p>We couldn't find the event you're looking for.</p>
+                <div class="error-actions">
+                    <button onclick="EventDetailsPage.retryLoad()" class="btn btn-primary">Try Again</button>
+                    <button onclick="EventDetailsPage.goBack()" class="btn btn-secondary">Back to Events</button>
+                </div>
+            </div>
+
+            <!-- Event Content (will be populated dynamically) -->
+            <div id="event-content" class="event-content hidden">
+                <!-- Event Header -->
+                <div class="event-header">
+                    <div class="event-category-badge" id="event-category"></div>
+                    <h1 id="event-title" class="event-title"></h1>
+                    <div class="event-meta">
+                        <div class="meta-item">
+                            <span class="meta-icon">📅</span>
+                            <span id="event-date" class="meta-text"></span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-icon">📍</span>
+                            <span id="event-location" class="meta-text"></span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-icon">💰</span>
+                            <span id="event-price" class="meta-text"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="event-layout">
+                    <!-- Main Content -->
+                    <div class="event-main">
+                        <!-- Event Image -->
+                        <div class="event-image-section">
+                            <div id="event-image" class="event-image">
+                                <!-- Emoji will be set dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Full Description -->
+                        <section class="description-section">
+                            <h2>About This Event</h2>
+                            <div id="event-description" class="event-description"></div>
+                        </section>
+
+                        <!-- Address -->
+                        <section class="address-section" id="address-section">
+                            <h2>📍 Event Location</h2>
+                            <div class="address-content">
+                                <p id="event-address" class="event-address"></p>
+                                <button onclick="EventDetailsPage.openMaps()" class="map-button">
+                                    🗺️ Open in Maps
+                                </button>
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- Sidebar -->
+                    <div class="event-sidebar">
+                        <!-- Progress Section -->
+                        <section class="progress-section">
+                            <h3>Fundraising Progress</h3>
+                            <div class="progress-card">
+                                <div class="progress-stats">
+                                    <div class="stat">
+                                        <span class="stat-label">Raised</span>
+                                        <span id="current-amount" class="stat-value"></span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-label">Goal</span>
+                                        <span id="goal-amount" class="stat-value"></span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="stat-label">Progress</span>
+                                        <span id="progress-percent" class="stat-value"></span>
+                                    </div>
+                                </div>
+                                <div class="progress-visual">
+                                    <div class="progress-bar">
+                                        <div id="progress-fill" class="progress-fill"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Registration Section -->
+                        <section class="registration-section">
+                            <h3>Join This Event</h3>
+                            <div class="registration-card">
+                                <div class="ticket-info">
+                                    <span id="ticket-type" class="ticket-type"></span>
+                                    <span id="ticket-price-display" class="ticket-price"></span>
+                                </div>
+                                <div class="attendee-info">
+                                    <div class="info-item">
+                                        <span class="info-label">Max Attendees:</span>
+                                        <span id="max-attendees" class="info-value"></span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Status:</span>
+                                        <span id="event-status" class="info-value status-active"></span>
+                                    </div>
+                                </div>
+                                <button onclick="EventDetailsPage.showRegisterModal()" class="register-button">
+                                    Register Now
+                                </button>
+                                <p class="registration-note">
+                                    Your participation helps support a great cause!
+                                </p>
+                            </div>
+                        </section>
+
+                        <!-- Quick Info -->
+                        <section class="quick-info-section">
+                            <h3>Event Quick Info</h3>
+                            <div class="quick-info-card">
+                                <div class="info-row">
+                                    <span class="info-icon">⏰</span>
+                                    <div class="info-content">
+                                        <strong>Duration</strong>
+                                        <span>Varies by event</span>
+                                    </div>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-icon">👥</span>
+                                    <div class="info-content">
+                                        <strong>Audience</strong>
+                                        <span>All ages welcome</span>
+                                    </div>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-icon">📞</span>
+                                    <div class="info-content">
+                                        <strong>Contact</strong>
+                                        <span>info@charityevents.org</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Charity Events. Making the world a better place, one event at a time.</p>
+        </div>
+    </footer>
+
+    <!-- Register Modal -->
+    <div id="register-modal" class="modal">
+        <div class="modal-content">
+            <h3>Registration Coming Soon</h3>
+            <p>This feature is currently under construction. Check back later to register for this event!</p>
+            <div class="modal-buttons">
+                <button onclick="EventDetailsPage.closeModal()" class="btn btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../app.js"></script>
+    <script src="event-details.js"></script>
+</body>
+</html>
