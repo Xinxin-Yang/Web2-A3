@@ -406,3 +406,103 @@
         flex-direction: column;
     }
 }
+
+
+
+
+/* 在原有样式基础上添加注册信息样式 */
+
+.registration-info {
+    margin: 0.5rem 0;
+    font-size: 0.9rem;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.result-card .progress-section {
+    margin: 1rem 0;
+}
+
+.result-card .progress-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.result-card .progress-bar {
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.result-card .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #28a745, #20c997);
+    transition: width 0.3s ease;
+}
+
+.event-status {
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.event-status.upcoming {
+    background: #e7f5ff;
+    color: #1971c2;
+}
+
+.event-status.past {
+    background: #f8f9fa;
+    color: #868e96;
+}
+
+.past-event {
+    opacity: 0.7;
+}
+
+.past-event .result-title {
+    color: #868e96;
+}
+
+/* 更新按钮样式以包含注册功能 */
+.register-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.register-btn:hover {
+    background: #218838;
+    transform: translateY(-2px);
+}
+
+.register-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* 响应式设计更新 */
+@media (max-width: 768px) {
+    .result-actions {
+        flex-direction: column;
+    }
+    
+    .register-btn,
+    .view-details-btn {
+        width: 100%;
+        text-align: center;
+    }
+}

@@ -21,7 +21,18 @@ class SearchPage {
     async init() {
         await this.loadCategories();
         this.setupEventListeners();
-        // No date restrictions - allow selecting any date
+        this.checkURLParams();
+    }
+
+    checkURLParams() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const eventId = urlParams.get('event_id');
+        
+        if (eventId) {
+            // Pre-fill category filter if event_id is provided
+            this.categoryIdSelect.value = eventId;
+            this.performSearch();
+        }
     }
 
     async loadCategories() {
@@ -69,6 +80,19 @@ class SearchPage {
                 this.clearFilters();
             });
         }
+
+        // Real-time search for better UX
+        const searchInputs = ['location', 'category', 'category-id'];
+        searchInputs.forEach(inputId => {
+            const input = document.getElementById(inputId.replace('-', ''));
+            if (input) {
+                input.addEventListener('input', CharityEventsApp.debounce(() => {
+                    if (input.value.length >= 2 || input.value.length === 0) {
+                        this.performSearch();
+                    }
+                }, 500));
+            }
+        });
     }
 
     async performSearch() {
@@ -124,12 +148,23 @@ class SearchPage {
         const formattedDate = CharityEventsApp.formatDate(event.date_time);
         const formattedPrice = event.ticket_price > 0 ? 
             CharityEventsApp.formatCurrency(event.ticket_price) : 'Free';
-        const progress = CharityEventsApp.calculateProgress(event.current_amount, event.goal_amount);
+        
+        // 使用数据库中的 current_amount 来计算筹款进度
+        const currentAmount = parseFloat(event.current_amount) || 0;
+        const goalAmount = parseFloat(event.goal_amount) || 0;
+        const progress = goalAmount > 0 ? Math.min(Math.round((currentAmount / goalAmount) * 100), 100) : 0;
+        
         const isPastEvent = !CharityEventsApp.isEventUpcoming(event.date_time);
         const statusBadge = isPastEvent ? 
             '<span class="event-status past">Completed</span>' : 
             '<span class="event-status upcoming">Active</span>';
         const emoji = this.getEventEmoji(event.category_name);
+
+        // Registration info
+        const registrationInfo = event.registered_tickets > 0 ? 
+            `<div class="registration-info">
+                <span>👥 ${event.registered_tickets} people registered</span>
+            </div>` : '';
 
         return `
             <div class="result-card ${isPastEvent ? 'past-event' : ''}" data-event-id="${event.id}">
@@ -151,11 +186,12 @@ class SearchPage {
                         <span>📍</span>
                         ${event.location || 'Location TBD'}
                     </div>
+                    ${registrationInfo}
                     <p class="result-description">${event.short_description || 'No description available'}</p>
                     
                     <div class="progress-section">
                         <div class="progress-info">
-                            <span>Raised: ${CharityEventsApp.formatCurrency(event.current_amount || 0)}</span>
+                            <span>Raised: ${CharityEventsApp.formatCurrency(currentAmount)} of ${CharityEventsApp.formatCurrency(goalAmount)}</span>
                             <span>${progress}%</span>
                         </div>
                         <div class="progress-bar">
@@ -171,7 +207,7 @@ class SearchPage {
                             <button class="view-details-btn" onclick="SearchPage.viewEventDetails(${event.id})">
                                 View Details
                             </button>
-                            <button class="register-btn" onclick="SearchPage.showRegisterModal()">
+                            <button class="register-btn" onclick="SearchPage.registerForEvent(${event.id})">
                                 Register
                             </button>
                         </div>
@@ -276,6 +312,11 @@ class SearchPage {
         if (this.searchInfo) {
             this.searchInfo.classList.add('hidden');
         }
+        
+        // Clear URL parameters
+        const url = new URL(window.location);
+        url.search = '';
+        window.history.replaceState({}, '', url);
     }
 
     static viewEventDetails(eventId) {
@@ -283,11 +324,13 @@ class SearchPage {
         window.location.href = `/event-details?id=${eventId}`;
     }
 
+    static registerForEvent(eventId) {
+        if (!eventId) return;
+        window.location.href = `/registration/form?id=${eventId}`;
+    }
+
     static showRegisterModal() {
-        const modal = document.getElementById('register-modal');
-        if (modal) {
-            modal.style.display = 'block';
-        }
+        CharityEventsApp.showNotification('Please use the "Register" button on individual event cards.', 'info');
     }
 
     static closeModal() {
