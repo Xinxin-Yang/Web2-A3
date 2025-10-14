@@ -1,16 +1,17 @@
 const express = require('express');
 const cors = require('cors');
 const eventsRouter = require('./events');
+const registrationsRouter = require('./registrations');
 const { connectDB } = require('./database/event_db');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// Middleware
+// 中间件
 app.use(cors());
 app.use(express.json());
 
-// Test database connection on startup
+// 测试数据库连接
 connectDB().then(success => {
   if (success) {
     console.log('Database connection established');
@@ -19,10 +20,11 @@ connectDB().then(success => {
   }
 });
 
-// Routes
+// 路由
 app.use('/api/events', eventsRouter);
+app.use('/api/registrations', registrationsRouter);
 
-// Health check endpoint
+// 健康检查端点
 app.get('/api/health', async (req, res) => {
   try {
     const dbStatus = await connectDB();
@@ -39,7 +41,7 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-// 404 handler
+// 404处理
 app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
@@ -47,7 +49,7 @@ app.use('*', (req, res) => {
   });
 });
 
-// Error handling middleware
+// 错误处理中间件
 app.use((error, req, res, next) => {
   console.error('Server error:', error);
   res.status(500).json({
@@ -57,9 +59,10 @@ app.use((error, req, res, next) => {
   });
 });
 
-// Start server
+// 启动服务器
 app.listen(PORT, () => {
   console.log(`Charity Events API Server running on port ${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/api/health`);
   console.log(`Events API: http://localhost:${PORT}/api/events`);
+  console.log(`Registrations API: http://localhost:${PORT}/api/registrations`);
 });
