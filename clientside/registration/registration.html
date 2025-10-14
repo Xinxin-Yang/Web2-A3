@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Registration - Charity Events</title>
+    <link rel="stylesheet" href="/registration/registration.css">
+    <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h1>❤️ Charity Events</h1>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="/" class="nav-link">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/search" class="nav-link">Search Events</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="registration-container">
+        <div class="container">
+            <div class="back-nav">
+                <button onclick="RegistrationPage.goBack()" class="back-button">
+                    ← Back to Event
+                </button>
+            </div>
+
+            <div id="loading-message" class="loading">
+                <div class="spinner"></div>
+                <p>Loading event information...</p>
+            </div>
+
+            <div id="error-message" class="error-message hidden">
+                <h3>⚠️ Error</h3>
+                <p id="error-text"></p>
+                <div class="error-actions">
+                    <button onclick="RegistrationPage.retryLoad()" class="btn btn-primary">Try Again</button>
+                    <button onclick="RegistrationPage.goBack()" class="btn btn-secondary">Back to Event</button>
+                </div>
+            </div>
+
+            <div id="registration-content" class="registration-content hidden">
+                <div class="registration-header">
+                    <h1>Register for Event</h1>
+                    <div id="event-info" class="event-info-card">
+                        <!-- Event information will be populated here -->
+                    </div>
+                </div>
+
+                <div class="registration-form-section">
+                    <h2>Registration Form</h2>
+                    <form id="registration-form" class="registration-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="full-name">Full Name *</label>
+                                <input type="text" id="full-name" name="full_name" required 
+                                       placeholder="Enter your full name">
+                                <span class="error-message" id="full-name-error"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="email">Email Address *</label>
+                                <input type="email" id="email" name="email" required 
+                                       placeholder="Enter your email address">
+                                <span class="error-message" id="email-error"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="phone">Phone Number</label>
+                                <input type="tel" id="phone" name="phone" 
+                                       placeholder="Enter your phone number">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="ticket-quantity">Number of Tickets *</label>
+                                <input type="number" id="ticket-quantity" name="ticket_quantity" 
+                                       min="1" max="10" value="1" required>
+                                <small>Maximum 10 tickets per registration</small>
+                                <span class="error-message" id="ticket-quantity-error"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="emergency-contact-name">Emergency Contact Name</label>
+                                <input type="text" id="emergency-contact-name" name="emergency_contact_name" 
+                                       placeholder="Emergency contact full name">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="emergency-contact-phone">Emergency Contact Phone</label>
+                                <input type="tel" id="emergency-contact-phone" name="emergency_contact_phone" 
+                                       placeholder="Emergency contact phone number">
+                            </div>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="address">Address</label>
+                            <textarea id="address" name="address" rows="3" 
+                                      placeholder="Enter your full address"></textarea>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="special-requirements">Special Requirements</label>
+                            <textarea id="special-requirements" name="special_requirements" rows="3" 
+                                      placeholder="Any dietary restrictions, accessibility needs, or other special requirements"></textarea>
+                        </div>
+
+                        <div id="price-calculation" class="price-calculation">
+                            <!-- Price calculation will be populated here -->
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="submit-button" id="submit-button">
+                                Complete Registration
+                            </button>
+                            <button type="button" onclick="RegistrationPage.goBack()" class="cancel-button">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div id="success-message" class="success-message hidden">
+                <div class="success-icon">🎉</div>
+                <h2>Registration Successful!</h2>
+                <p>Thank you for registering for this charity event. Your support makes a difference!</p>
+                <div id="registration-details" class="registration-details">
+                    <!-- Registration details will be populated here -->
+                </div>
+                <div class="success-actions">
+                    <button onclick="RegistrationPage.viewEvent()" class="btn btn-primary">
+                        View Event Details
+                    </button>
+                    <button onclick="RegistrationPage.goHome()" class="btn btn-secondary">
+                        Back to Homepage
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Charity Events. Making the world a better place, one event at a time.</p>
+        </div>
+    </footer>
+
+    <script src="/app.js"></script>
+    <script src="/registration/registration.js"></script>
+</body>
+</html>
