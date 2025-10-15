@@ -42,7 +42,6 @@ class HomePage {
                 <div class="no-events">
                     <h3>No events found</h3>
                     <p>Check back later for new charity events!</p>
-                    <p><small>Debug: events array is empty</small></p>
                 </div>
             `;
             return;
@@ -50,7 +49,12 @@ class HomePage {
 
         console.log(`🖼️ Preparing to display ${events.length} events`);
         const eventsHTML = events.map(event => {
-            console.log('Event data:', event);
+            console.log('🏠 Home page event data:', {
+                id: event.id,
+                name: event.name,
+                current_amount: event.current_amount,
+                goal_amount: event.goal_amount
+            });
             return this.createEventCard(event);
         }).join('');
         
@@ -64,16 +68,61 @@ class HomePage {
         const formattedDate = CharityEventsApp.formatDate(event.date_time);
         const formattedPrice = event.ticket_price > 0 ? 
             CharityEventsApp.formatCurrency(event.ticket_price) : 'Free';
-        const progress = CharityEventsApp.calculateProgress(event.current_amount, event.goal_amount);
+        
+        // 使用数据库中的 current_amount 来计算筹款进度
+        const currentAmount = parseFloat(event.current_amount) || 0;
+        const goalAmount = parseFloat(event.goal_amount) || 0;
+        const progress = goalAmount > 0 ? Math.min(Math.round((currentAmount / goalAmount) * 100), 100) : 0;
         
         // Check if event is past
-        const isPastEvent = !CharityEventsApp.isEventUpcoming(event.date_time);
+        const isPastEvent = event.is_past_event || !CharityEventsApp.isEventUpcoming(event.date_time);
         const statusBadge = isPastEvent ? 
             '<span class="event-status past">Completed</span>' : 
             '<span class="event-status upcoming">Active</span>';
         
         // Get appropriate emoji for event type
         const emoji = this.getEventEmoji(event.category_name);
+
+        // 票数信息显示
+        let ticketInfo = '';
+        if (event.max_attendees) {
+            const availableTickets = event.available_tickets;
+            if (availableTickets <= 0) {
+                ticketInfo = `<div class="registration-info">
+                    <span>🎫 Fully Booked</span>
+                </div>`;
+            } else if (event.is_almost_full) {
+                ticketInfo = `<div class="registration-info">
+                    <span>🎫 Only ${availableTickets} tickets left!</span>
+                </div>`;
+            } else {
+                ticketInfo = `<div class="registration-info">
+                    <span>🎫 ${availableTickets} tickets available</span>
+                </div>`;
+            }
+        } else {
+            ticketInfo = `<div class="registration-info">
+                <span>🎫 Unlimited tickets</span>
+            </div>`;
+        }
+
+        // 注册人数信息
+        const registrationInfo = event.registered_tickets > 0 ? 
+            `<div class="registration-info">
+                <span>👥 ${event.registered_tickets} people registered</span>
+            </div>` : '';
+
+        // 筹款进度信息 - 使用数据库中的筹款金额
+        const fundraisingInfo = event.goal_amount > 0 ? 
+            `<div class="progress-section">
+                <div class="progress-info">
+                    <span>Raised: ${CharityEventsApp.formatCurrency(currentAmount)} of ${CharityEventsApp.formatCurrency(goalAmount)}</span>
+                    <span>${progress}%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${progress}%"></div>
+                </div>
+            </div>` : '';
 
         return `
             <div class="event-card ${isPastEvent ? 'past-event' : ''}" data-event-id="${event.id}">
@@ -95,24 +144,18 @@ class HomePage {
                         <span>📍</span>
                         ${event.location}
                     </div>
+                    ${registrationInfo}
+                    ${ticketInfo}
                     <p class="event-description">${event.short_description}</p>
                     
-                    <div class="progress-section">
-                        <div class="progress-info">
-                            <span>Raised: ${CharityEventsApp.formatCurrency(event.current_amount)} of ${CharityEventsApp.formatCurrency(event.goal_amount)}</span>
-                            <span>${progress}%</span>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${progress}%"></div>
-                        </div>
-                    </div>
+                    ${fundraisingInfo}
                     
                     <div class="event-footer">
                         <span class="ticket-price ${event.ticket_price === 0 ? 'free-ticket' : ''}">
                             ${formattedPrice}
                         </span>
                         <button class="view-details" onclick="HomePage.viewEventDetails(${event.id})">
-                            View Details
+                            View Details & Register
                         </button>
                     </div>
                 </div>
@@ -167,78 +210,6 @@ class HomePage {
         this.eventsContainer.innerHTML = '';
     }
 }
-
-// Additional CSS for progress bars and event status
-const progressStyles = `
-    .progress-section {
-        margin: 1rem 0;
-    }
-    
-    .progress-info {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 0.5rem;
-        font-size: 0.9rem;
-        color: #666;
-    }
-    
-    .progress-bar {
-        height: 8px;
-        background: #e9ecef;
-        border-radius: 4px;
-        overflow: hidden;
-    }
-    
-    .progress-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #28a745, #20c997);
-        transition: width 0.3s ease;
-    }
-    
-    .no-events {
-        text-align: center;
-        padding: 3rem;
-        grid-column: 1 / -1;
-        color: #666;
-    }
-    
-    .event-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-    }
-    
-    .event-status {
-        padding: 0.25rem 0.5rem;
-        border-radius: 12px;
-        font-size: 0.75rem;
-        font-weight: bold;
-    }
-    
-    .event-status.upcoming {
-        background: #e7f5ff;
-        color: #1971c2;
-    }
-    
-    .event-status.past {
-        background: #f8f9fa;
-        color: #868e96;
-    }
-    
-    .past-event {
-        opacity: 0.7;
-    }
-    
-    .past-event .event-title {
-        color: #868e96;
-    }
-`;
-
-// Add progress styles to document
-const styleSheet = document.createElement('style');
-styleSheet.textContent = progressStyles;
-document.head.appendChild(styleSheet);
 
 // Initialize home page when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
