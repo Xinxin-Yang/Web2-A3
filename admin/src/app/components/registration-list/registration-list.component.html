@@ -1,0 +1,162 @@
+<div class="registrations-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-info">
+        <h1>Event Registrations</h1>
+        <p *ngIf="event">{{ event.name }}</p>
+        <div *ngIf="event" class="event-meta">
+          <span>📅 {{ formatDate(event.date_time) }}</span>
+          <span>📍 {{ event.location }}</span>
+        </div>
+      </div>
+      <button class="btn btn-secondary" routerLink="/events">
+        ← Back to Events
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading registrations...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-message">
+    <h3>⚠️ Error</h3>
+    <p>{{ error }}</p>
+    <button class="btn btn-primary" (click)="loadEventAndRegistrations()">
+      Try Again
+    </button>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!loading && !error" class="registrations-content">
+    
+    <!-- Summary Cards -->
+    <div class="summary-cards">
+      <div class="summary-card">
+        <div class="summary-icon">👥</div>
+        <div class="summary-info">
+          <h3>{{ registrations.length }}</h3>
+          <p>Total Registrations</p>
+        </div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-icon">🎫</div>
+        <div class="summary-info">
+          <h3>{{ getTotalTickets() }}</h3>
+          <p>Total Tickets</p>
+        </div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-icon">💰</div>
+        <div class="summary-info">
+          <h3>{{ formatCurrency(getTotalRevenue()) }}</h3>
+          <p>Total Revenue</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-row">
+      <div class="search-box">
+        <input 
+          type="text" 
+          placeholder="Search by name, email, or phone..."
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearchChange()">
+        <span class="search-icon">🔍</span>
+      </div>
+      
+      <button class="btn btn-primary" (click)="exportToCSV()" [disabled]="registrations.length === 0">
+        📊 Export CSV
+      </button>
+    </div>
+
+    <!-- Registrations Table -->
+    <div class="table-container">
+      <div *ngIf="filteredRegistrations.length === 0" class="no-data">
+        <div *ngIf="searchTerm">
+          <h3>No matching registrations found</h3>
+          <p>Try adjusting your search terms</p>
+        </div>
+        <div *ngIf="!searchTerm">
+          <h3>No registrations yet</h3>
+          <p>Registrations will appear here once people start signing up for your event.</p>
+        </div>
+      </div>
+
+      <div *ngIf="filteredRegistrations.length > 0" class="table-wrapper">
+        <table class="registrations-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Contact</th>
+              <th>Tickets</th>
+              <th>Amount</th>
+              <th>Registration Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let registration of paginatedRegistrations" class="registration-row">
+              <td class="name-cell">
+                <div class="avatar">
+                  {{ registration.full_name.charAt(0) }}
+                </div>
+                <div class="name-info">
+                  <strong>{{ registration.full_name }}</strong>
+                </div>
+              </td>
+              <td class="contact-cell">
+                <div class="email">{{ registration.email }}</div>
+                <div *ngIf="registration.phone" class="phone">
+                  {{ registration.phone }}
+                </div>
+              </td>
+              <td class="tickets-cell">
+                <span class="ticket-badge">{{ registration.ticket_quantity }}</span>
+              </td>
+              <td class="amount-cell">
+                <span class="amount" [class.free]="registration.total_amount === 0">
+                  {{ formatCurrency(registration.total_amount) }}
+                </span>
+              </td>
+              <td class="date-cell">
+                {{ formatDate(registration.registration_date) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div *ngIf="filteredRegistrations.length > pageSize" class="pagination">
+        <button 
+          class="pagination-btn"
+          (click)="onPageChange(currentPage - 1)"
+          [disabled]="currentPage === 1">
+          ← Previous
+        </button>
+        
+        <div class="pagination-pages">
+          <button 
+            *ngFor="let page of getPages()"
+            class="pagination-page"
+            [class.active]="page === currentPage"
+            (click)="onPageChange(page)">
+            {{ page }}
+          </button>
+        </div>
+        
+        <button 
+          class="pagination-btn"
+          (click)="onPageChange(currentPage + 1)"
+          [disabled]="currentPage === totalPages">
+          Next →
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
