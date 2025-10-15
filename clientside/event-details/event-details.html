@@ -5,10 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Event Details - Charity Events</title>
     <link rel="stylesheet" href="/event-details/event-details.css">
-    <link rel="stylesheet" href="../app.css">
+    <link rel="stylesheet" href="/app.css">
 </head>
 <body>
-    <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-logo">
@@ -21,27 +20,26 @@
                 <li class="nav-item">
                     <a href="/search" class="nav-link">Search Events</a>
                 </li>
+                <li class="nav-item">
+                    <a href="/registration" class="nav-link">Register</a>
+                </li>
             </ul>
         </div>
     </nav>
 
-    <!-- Event Details Section -->
     <main class="event-details">
         <div class="container">
-            <!-- Back Button -->
             <div class="back-nav">
                 <button onclick="EventDetailsPage.goBack()" class="back-button">
                     ← Back to Events
                 </button>
             </div>
 
-            <!-- Loading State -->
             <div id="loading-message" class="loading">
                 <div class="spinner"></div>
                 <p>Loading event details...</p>
             </div>
 
-            <!-- Error State -->
             <div id="error-message" class="error-message hidden">
                 <h3>⚠️ Event Not Found</h3>
                 <p>We couldn't find the event you're looking for.</p>
@@ -51,9 +49,7 @@
                 </div>
             </div>
 
-            <!-- Event Content (will be populated dynamically) -->
             <div id="event-content" class="event-content hidden">
-                <!-- Event Header -->
                 <div class="event-header">
                     <div class="event-category-badge" id="event-category"></div>
                     <h1 id="event-title" class="event-title"></h1>
@@ -70,26 +66,37 @@
                             <span class="meta-icon">💰</span>
                             <span id="event-price" class="meta-text"></span>
                         </div>
+                        <div class="meta-item">
+                            <span class="meta-icon">👥</span>
+                            <span id="registration-count" class="meta-text"></span>
+                        </div>
                     </div>
                 </div>
 
                 <div class="event-layout">
-                    <!-- Main Content -->
                     <div class="event-main">
-                        <!-- Event Image -->
                         <div class="event-image-section">
-                            <div id="event-image" class="event-image">
-                                <!-- Emoji will be set dynamically -->
-                            </div>
+                            <div id="event-image" class="event-image"></div>
                         </div>
 
-                        <!-- Full Description -->
                         <section class="description-section">
                             <h2>About This Event</h2>
                             <div id="event-description" class="event-description"></div>
                         </section>
 
-                        <!-- Address -->
+                        <!-- 新增：注册列表部分 -->
+                        <section class="registrations-section">
+                            <h2>Recent Registrations</h2>
+                            <div id="registrations-container" class="registrations-container">
+                                <div class="registrations-list" id="registrations-list">
+                                    <!-- 注册列表将由JavaScript动态生成 -->
+                                </div>
+                                <div id="no-registrations" class="no-registrations hidden">
+                                    <p>No registrations yet. Be the first to register!</p>
+                                </div>
+                            </div>
+                        </section>
+
                         <section class="address-section" id="address-section">
                             <h2>📍 Event Location</h2>
                             <div class="address-content">
@@ -101,9 +108,7 @@
                         </section>
                     </div>
 
-                    <!-- Sidebar -->
                     <div class="event-sidebar">
-                        <!-- Progress Section -->
                         <section class="progress-section">
                             <h3>Fundraising Progress</h3>
                             <div class="progress-card">
@@ -129,7 +134,6 @@
                             </div>
                         </section>
 
-                        <!-- Registration Section -->
                         <section class="registration-section">
                             <h3>Join This Event</h3>
                             <div class="registration-card">
@@ -143,11 +147,15 @@
                                         <span id="max-attendees" class="info-value"></span>
                                     </div>
                                     <div class="info-item">
+                                        <span class="info-label">Available Tickets:</span>
+                                        <span id="available-tickets" class="info-value"></span>
+                                    </div>
+                                    <div class="info-item">
                                         <span class="info-label">Status:</span>
                                         <span id="event-status" class="info-value status-active"></span>
                                     </div>
                                 </div>
-                                <button onclick="EventDetailsPage.showRegisterModal()" class="register-button">
+                                <button onclick="EventDetailsPage.registerForEvent()" class="register-button">
                                     Register Now
                                 </button>
                                 <p class="registration-note">
@@ -156,7 +164,6 @@
                             </div>
                         </section>
 
-                        <!-- Quick Info -->
                         <section class="quick-info-section">
                             <h3>Event Quick Info</h3>
                             <div class="quick-info-card">
@@ -189,25 +196,13 @@
         </div>
     </main>
 
-    <!-- Footer -->
     <footer class="footer">
         <div class="container">
             <p>&copy; 2025 Charity Events. Making the world a better place, one event at a time.</p>
         </div>
     </footer>
 
-    <!-- Register Modal -->
-    <div id="register-modal" class="modal">
-        <div class="modal-content">
-            <h3>Registration Coming Soon</h3>
-            <p>This feature is currently under construction. Check back later to register for this event!</p>
-            <div class="modal-buttons">
-                <button onclick="EventDetailsPage.closeModal()" class="btn btn-primary">OK</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="../app.js"></script>
-    <script src="event-details.js"></script>
+    <script src="/app.js"></script>
+    <script src="/event-details/event-details.js"></script>
 </body>
 </html>
