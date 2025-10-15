@@ -1,10 +1,8 @@
 .navbar {
   background: white;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  position: fixed;
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
   z-index: 1000;
 }
 
@@ -65,6 +63,7 @@
   color: white;
 }
 
+/* 移动端样式 */
 @media (max-width: 768px) {
   .menu-toggle {
     display: flex;

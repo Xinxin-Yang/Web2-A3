@@ -4,12 +4,14 @@
       <h1>❤️ Charity Events Admin</h1>
     </div>
     
-    <button class="menu-toggle" (click)="toggleMenu()">
+    <!-- 移动端菜单按钮 -->
+    <button class="menu-toggle" (click)="toggleMenu()" aria-label="Toggle menu">
       <span></span>
       <span></span>
       <span></span>
     </button>
 
+    <!-- 导航菜单 -->
     <div class="nav-menu" [class.active]="isMenuOpen">
       <a class="nav-link" routerLink="/dashboard" routerLinkActive="active" (click)="closeMenu()">
         📊 Dashboard
