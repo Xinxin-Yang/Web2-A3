@@ -35,6 +35,134 @@ class CharityEventsApp {
         }
     }
 
+
+
+
+
+
+
+
+
+
+    // 在 CharityEventsApp 类中添加以下方法
+static async apiRequest(endpoint, options = {}) {
+    try {
+        console.log(`🔄 Making API request to: ${API_BASE_URL}${endpoint}`);
+        
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers,
+            },
+            ...options
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success && data.success !== undefined) {
+            throw new Error(data.message || 'API request failed');
+        }
+        
+        console.log(`✅ API request successful: ${endpoint}`);
+        return data;
+        
+    } catch (error) {
+        console.error(`❌ API request failed: ${endpoint}`, error);
+        
+        // Provide more user-friendly error messages
+        if (error.message.includes('Failed to fetch')) {
+            throw new Error('无法连接到服务器。请检查：\n1. API服务器是否运行在端口4000\n2. 网络连接是否正常');
+        }
+        
+        if (error.message.includes('HTTP error')) {
+            // Extract the actual error message from the server
+            const serverMessage = error.message.split('message: ')[1];
+            if (serverMessage) {
+                try {
+                    const serverError = JSON.parse(serverMessage);
+                    throw new Error(serverError.message || serverError.error || 'Server error occurred');
+                } catch {
+                    throw new Error(serverMessage || 'Server error occurred');
+                }
+            }
+        }
+        
+        throw error;
+    }
+}
+
+
+
+
+
+
+
+
+
+    static async apiRequest(endpoint, options = {}) {
+    try {
+        console.log(`🔄 Making API request to: ${API_BASE_URL}${endpoint}`);
+        
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers,
+            },
+            ...options
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success && data.success !== undefined) {
+            throw new Error(data.message || 'API request failed');
+        }
+        
+        console.log(`✅ API request successful: ${endpoint}`);
+        return data;
+        
+    } catch (error) {
+        console.error(`❌ API request failed: ${endpoint}`, error);
+        
+        // Provide more user-friendly error messages
+        if (error.message.includes('Failed to fetch')) {
+            throw new Error('无法连接到服务器。请检查：\n1. API服务器是否运行在端口4000\n2. 网络连接是否正常');
+        }
+        
+        if (error.message.includes('HTTP error')) {
+            // Extract the actual error message from the server
+            const serverMessage = error.message.split('message: ')[1];
+            if (serverMessage) {
+                try {
+                    const serverError = JSON.parse(serverMessage);
+                    throw new Error(serverError.message || serverError.error || 'Server error occurred');
+                } catch {
+                    throw new Error(serverMessage || 'Server error occurred');
+                }
+            }
+        }
+        
+        throw error;
+    }
+}
+
+
+
+
+
+
+
+
+
     // Format date for display
     static formatDate(dateString) {
         try {
