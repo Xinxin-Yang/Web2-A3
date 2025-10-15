@@ -1,0 +1,108 @@
+<div class="event-list-container">
+  <!-- 页面标题和操作按钮 -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-info">
+        <h1>Event Management</h1>
+        <p>Manage all your charity events in one place</p>
+      </div>
+      <button class="btn btn-primary" routerLink="/events/new">
+        + Add New Event
+      </button>
+    </div>
+  </div>
+
+  <!-- 加载状态 -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading events...</p>
+  </div>
+
+  <!-- 错误状态 -->
+  <div *ngIf="error && !loading" class="error-message">
+    <h3>⚠️ Error Loading Events</h3>
+    <p>{{ error }}</p>
+    <button class="btn btn-primary" (click)="loadEvents()">Try Again</button>
+  </div>
+
+  <!-- 事件列表 -->
+  <div *ngIf="!loading && !error" class="events-content">
+    <div *ngIf="events.length === 0" class="no-events">
+      <h3>No Events Found</h3>
+      <p>Create your first charity event to get started!</p>
+      <button class="btn btn-primary" routerLink="/events/new">Create First Event</button>
+    </div>
+
+    <div *ngIf="events.length > 0" class="events-grid">
+      <div *ngFor="let event of events" class="event-card">
+        <!-- 事件头部 -->
+        <div class="event-header">
+          <div class="event-category">
+            {{ event.category_name }}
+          </div>
+          <div class="event-status" [class.active]="event.is_active" [class.inactive]="!event.is_active">
+            {{ event.is_active ? 'Active' : 'Inactive' }}
+          </div>
+        </div>
+
+        <!-- 事件标题 -->
+        <h3 class="event-title">{{ event.name }}</h3>
+
+        <!-- 事件信息 -->
+        <div class="event-info">
+          <div class="info-item">
+            <span class="icon">📅</span>
+            <span>{{ formatDate(event.date_time) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="icon">📍</span>
+            <span>{{ event.location }}</span>
+          </div>
+          <div class="info-item">
+            <span class="icon">💰</span>
+            <span>{{ formatCurrency(event.ticket_price) }}</span>
+          </div>
+        </div>
+
+        <!-- 事件描述 -->
+        <p class="event-description">{{ event.short_description }}</p>
+
+        <!-- 筹款进度 -->
+        <div class="progress-section">
+          <div class="progress-info">
+            <span>Raised: {{ formatCurrency(event.current_amount) }}</span>
+            <span>Goal: {{ formatCurrency(event.goal_amount) }}</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="getProgressPercentage(event)"></div>
+          </div>
+          <div class="progress-percentage">{{ getProgressPercentage(event) }}%</div>
+        </div>
+
+        <!-- 注册统计 -->
+        <div class="registration-stats">
+          <span>{{ event.registration_count }} registrations</span>
+          <span>•</span>
+          <span>{{ event.total_tickets }} tickets</span>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="event-actions">
+          <button class="btn btn-secondary">Edit</button>
+          <button class="btn btn-info">View Registrations</button>
+          <button 
+            class="btn btn-danger" 
+            (click)="deleteEvent(event.id)"
+            [disabled]="event.registration_count > 0">
+            Delete
+          </button>
+        </div>
+
+        <!-- 删除警告 -->
+        <div *ngIf="event.registration_count > 0" class="delete-warning">
+          ⚠️ Cannot delete - has {{ event.registration_count }} registration(s)
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

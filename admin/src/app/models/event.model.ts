@@ -20,22 +20,6 @@ export interface Event {
   updated_at: string;
 }
 
-export interface EventFormData {
-  name: string;
-  short_description: string;
-  full_description: string;
-  date_time: string;
-  location: string;
-  address: string;
-  category_id: number;
-  ticket_price: number;
-  ticket_type: 'free' | 'paid';
-  goal_amount: number;
-  current_amount: number;
-  max_attendees?: number;
-  is_active: boolean;
-}
-
 export interface Category {
   id: number;
   name: string;
