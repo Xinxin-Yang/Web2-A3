@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Event to Register - Charity Events</title>
+    <link rel="stylesheet" href="/registration/registration.css">
+    <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h1>❤️ Charity Events</h1>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="/" class="nav-link">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/search" class="nav-link">Search Events</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/registration" class="nav-link active">Register</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="registration-selection-container">
+        <div class="container">
+            <div class="selection-header">
+                <h1>Select an Event to Register</h1>
+                <p>Choose from our upcoming charity events and make a difference!</p>
+            </div>
+
+            <div id="loading-message" class="loading">
+                <div class="spinner"></div>
+                <p>Loading available events...</p>
+            </div>
+
+            <div id="events-container" class="events-selection-grid hidden">
+                <!-- Events will be populated here dynamically -->
+            </div>
+
+            <div id="no-events-message" class="no-events-message hidden">
+                <div class="no-events-icon">📅</div>
+                <h3>No Upcoming Events Available</h3>
+                <p>There are currently no events available for registration. Please check back later!</p>
+                <div class="no-events-actions">
+                    <a href="/search" class="btn btn-primary">Browse All Events</a>
+                    <a href="/" class="btn btn-secondary">Return to Homepage</a>
+                </div>
+            </div>
+
+            <div id="error-message" class="error-message hidden">
+                <div class="error-icon">⚠️</div>
+                <h3>Unable to Load Events</h3>
+                <p id="error-text">We encountered an error while loading events. Please try again.</p>
+                <div class="error-actions">
+                    <button onclick="RegistrationSelectionPage.retryLoad()" class="btn btn-primary">Try Again</button>
+                    <button onclick="window.location.href='/'" class="btn btn-secondary">Go Home</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Charity Events. Making the world a better place, one event at a time.</p>
+        </div>
+    </footer>
+
+    <script src="/app.js"></script>
+    <script src="/registration/registration-selection.js"></script>
+</body>
+</html>
