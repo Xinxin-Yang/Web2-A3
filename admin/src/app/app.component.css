@@ -41,9 +41,6 @@
   padding: 0.5rem 1rem;
   border-radius: 5px;
   transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
 }
 
 .nav-link:hover,
@@ -54,7 +51,6 @@
 
 .main-content {
   flex: 1;
-  padding-top: 20px;
   background-color: #f8f9fa;
   min-height: calc(100vh - 70px);
 }
