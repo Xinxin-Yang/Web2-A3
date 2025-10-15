@@ -1,7 +1,7 @@
 {
   "name": "charity-events-client",
   "version": "1.0.0",
-  "description": "Client-side website for Charity Events",
+  "description": "Client-side website for Charity Events with Registration System",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -13,5 +13,14 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
-  }
+  },
+  "keywords": [
+    "charity",
+    "events",
+    "website",
+    "registration",
+    "javascript"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
 }
