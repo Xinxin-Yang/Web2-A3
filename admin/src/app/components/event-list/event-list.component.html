@@ -91,7 +91,9 @@
           <button class="btn btn-secondary" [routerLink]="['/events', event.id, 'edit']">
             Edit
           </button>
-          <button class="btn btn-info">View Registrations</button>
+          <button class="btn btn-info" [routerLink]="['/events', event.id, 'registrations']">
+            View Registrations ({{ event.registration_count }})
+          </button>
           <button 
             class="btn btn-danger" 
             (click)="deleteEvent(event.id)"
