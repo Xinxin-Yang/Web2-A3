@@ -88,7 +88,9 @@
 
         <!-- 操作按钮 -->
         <div class="event-actions">
-          <button class="btn btn-secondary">Edit</button>
+          <button class="btn btn-secondary" [routerLink]="['/events', event.id, 'edit']">
+            Edit
+          </button>
           <button class="btn btn-info">View Registrations</button>
           <button 
             class="btn btn-danger" 

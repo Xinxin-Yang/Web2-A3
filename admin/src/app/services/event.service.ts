@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Event } from '../models/event.model';
+import { HttpClient } from '@angular/common/http';
 
 // 修复 ApiResponse 接口，使 data 属性可选
 export interface ApiResponse<T = any> {
