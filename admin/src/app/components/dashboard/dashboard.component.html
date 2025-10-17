@@ -1,13 +1,228 @@
 <div class="dashboard-container">
-  <h1>🎉 Charity Events Admin Dashboard</h1>
-  <p>Welcome to the Charity Events Administration Panel</p>
-  
-  <div class="quick-links">
-    <h3>Quick Links:</h3>
-    <ul>
-      <li>📋 Manage Events</li>
-      <li>👥 View Registrations</li>
-      <li>➕ Create New Events</li>
-    </ul>
+  <!-- 页面标题 -->
+  <div class="page-header">
+    <h1>📊 Admin Dashboard</h1>
+    <p>Overview of your charity events and performance</p>
+  </div>
+
+  <!-- 加载状态 -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading dashboard data...</p>
+  </div>
+
+  <!-- 主要内容 -->
+  <div *ngIf="!loading" class="dashboard-content">
+    
+    <!-- 统计卡片 -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon total-events">🎪</div>
+        <div class="stat-info">
+          <h3>{{ stats.totalEvents }}</h3>
+          <p>Total Events</p>
+          <small>{{ stats.activeEvents }} active</small>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon registrations">👥</div>
+        <div class="stat-info">
+          <h3>{{ stats.totalRegistrations }}</h3>
+          <p>Total Registrations</p>
+          <small>{{ stats.totalTickets }} tickets</small>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon revenue">💰</div>
+        <div class="stat-info">
+          <h3>{{ formatCurrency(stats.totalRevenue) }}</h3>
+          <p>Total Revenue</p>
+          <small>From all events</small>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon upcoming">📅</div>
+        <div class="stat-info">
+          <h3>{{ stats.upcomingEvents }}</h3>
+          <p>Upcoming Events</p>
+          <small>Next 7 days</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- 主要内容区域 -->
+    <div class="main-content-grid">
+      
+      <!-- 左侧列 -->
+      <div class="left-column">
+        
+        <!-- 最近事件 -->
+        <div class="content-card">
+          <div class="card-header">
+            <h3>📋 Recent Events</h3>
+            <button routerLink="/events" class="btn btn-primary">View All</button>
+          </div>
+          <div class="events-list">
+            <div *ngFor="let event of recentEvents" class="event-item" [routerLink]="['/events', event.id, 'edit']">
+              <div class="event-emoji">
+                {{ getEventEmoji(event.category_name) }}
+              </div>
+              <div class="event-details">
+                <h4>{{ event.name }}</h4>
+                <div class="event-meta">
+                  <span>{{ formatDate(event.date_time) }}</span>
+                  <span>•</span>
+                  <span>{{ event.location }}</span>
+                </div>
+                <div class="event-stats">
+                  <span class="registrations">{{ event.registration_count }} registrations</span>
+                  <span class="revenue">{{ formatCurrency(event.current_amount) }} raised</span>
+                </div>
+              </div>
+              <div class="event-progress">
+                <div class="progress-bar">
+                  <div class="progress-fill" [style.width.%]="getProgressPercentage(event)"></div>
+                </div>
+                <span class="progress-text">{{ getProgressPercentage(event) }}%</span>
+              </div>
+            </div>
+            
+            <div *ngIf="recentEvents.length === 0" class="no-data">
+              <p>No events found. Create your first event!</p>
+              <button routerLink="/events/new" class="btn btn-primary">Create Event</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 即将开始的事件 -->
+        <div class="content-card">
+          <div class="card-header">
+            <h3>🚀 Upcoming Events</h3>
+            <span class="badge">{{ upcomingEvents.length }}</span>
+          </div>
+          <div class="upcoming-list">
+            <div *ngFor="let event of upcomingEvents" class="upcoming-item">
+              <div class="upcoming-emoji">
+                {{ getEventEmoji(event.category_name) }}
+              </div>
+              <div class="upcoming-details">
+                <h4>{{ event.name }}</h4>
+                <div class="upcoming-meta">
+                  <span [class.today]="isEventToday(event.date_time)">
+                    {{ formatDateTime(event.date_time) }}
+                  </span>
+                  <span>•</span>
+                  <span>{{ event.location }}</span>
+                </div>
+                <div class="days-until" [class.today]="isEventToday(event.date_time)">
+                  {{ isEventToday(event.date_time) ? 'Today!' : getDaysUntilEvent(event.date_time) + ' days' }}
+                </div>
+              </div>
+              <div class="upcoming-actions">
+                <button class="btn btn-sm btn-secondary" [routerLink]="['/events', event.id, 'edit']">
+                  Edit
+                </button>
+                <button class="btn btn-sm btn-info" [routerLink]="['/events', event.id, 'registrations']">
+                  View Reg
+                </button>
+              </div>
+            </div>
+            
+            <div *ngIf="upcomingEvents.length === 0" class="no-data">
+              <p>No upcoming events in the next 7 days</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧列 -->
+      <div class="right-column">
+        
+        <!-- 最近注册 -->
+        <div class="content-card">
+          <div class="card-header">
+            <h3>📝 Recent Registrations</h3>
+          </div>
+          <div class="registrations-list">
+            <div *ngFor="let registration of recentRegistrations" class="registration-item">
+              <div class="registration-avatar">
+                {{ registration.full_name.charAt(0) }}
+              </div>
+              <div class="registration-details">
+                <h4>{{ registration.full_name }}</h4>
+                <p class="email">{{ registration.email }}</p>
+                <div class="registration-meta">
+                  <span class="event-name">{{ registration.event_name }}</span>
+                  <span class="tickets">{{ registration.ticket_quantity }} ticket(s)</span>
+                  <span class="amount" [class.free]="registration.total_amount === 0">
+                    {{ formatCurrency(registration.total_amount) }}
+                  </span>
+                </div>
+              </div>
+              <div class="registration-date">
+                {{ formatDate(registration.registration_date) }}
+              </div>
+            </div>
+            
+            <div *ngIf="recentRegistrations.length === 0" class="no-data">
+              <p>No recent registrations</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 快速操作 -->
+        <div class="content-card">
+          <div class="card-header">
+            <h3>⚡ Quick Actions</h3>
+          </div>
+          <div class="quick-actions-grid">
+            <button routerLink="/events/new" class="quick-action-btn primary">
+              <span class="icon">➕</span>
+              <span>Create New Event</span>
+            </button>
+            <button routerLink="/events" class="quick-action-btn secondary">
+              <span class="icon">📋</span>
+              <span>Manage Events</span>
+            </button>
+            <button class="quick-action-btn secondary">
+              <span class="icon">📊</span>
+              <span>View Reports</span>
+            </button>
+            <button class="quick-action-btn secondary">
+              <span class="icon">👥</span>
+              <span>All Registrations</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 性能指标 -->
+        <div class="content-card">
+          <div class="card-header">
+            <h3>📈 Performance Metrics</h3>
+          </div>
+          <div class="metrics-grid">
+            <div class="metric-item">
+              <div class="metric-value">{{ (stats.totalRevenue / 1000).toFixed(1) }}K</div>
+              <div class="metric-label">Total Funds Raised</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">{{ stats.totalTickets }}</div>
+              <div class="metric-label">Tickets Sold</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">{{ stats.activeEvents }}/{{ stats.totalEvents }}</div>
+              <div class="metric-label">Active Events</div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-value">{{ stats.totalRegistrations }}</div>
+              <div class="metric-label">Total Participants</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

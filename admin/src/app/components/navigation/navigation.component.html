@@ -19,7 +19,7 @@
       <a class="nav-link" routerLink="/events" routerLinkActive="active" (click)="closeMenu()">
         🎪 Events
       </a>
-      <a class="nav-link" href="/" target="_blank" (click)="closeMenu()">
+      <a class="nav-link" [href]="clientUrl" target="_blank" (click)="closeMenu()">
         🌐 View Public Site
       </a>
     </div>

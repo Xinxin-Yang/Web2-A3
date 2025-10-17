@@ -21,18 +21,16 @@ export class EventListComponent implements OnInit {
   loadEvents(): void {
     this.loading = true;
     this.eventService.getAllEvents().subscribe({
-      next: (response) => {
-        if (response.success && response.data) {
-          this.events = response.data;  // 添加 data 存在性检查
+      next: (response: any) => {
+        if (response.success) {
+          this.events = response.data;
         } else {
-          this.error = response.message || 'Failed to load events';
-          this.events = [];  // 确保 events 总是数组
+          this.error = 'Failed to load events';
         }
         this.loading = false;
       },
       error: (error: any) => {
-        this.error = 'Failed to load events. Please try again later.';
-        this.events = [];  // 确保 events 总是数组
+        this.error = 'Failed to load events. Please check if the API server is running.';
         this.loading = false;
         console.error('Error loading events:', error);
       }

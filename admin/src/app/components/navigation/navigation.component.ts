@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-navigation',
@@ -7,6 +8,7 @@ import { Component } from '@angular/core';
 })
 export class NavigationComponent {
   isMenuOpen = false;
+  clientUrl = environment.clientUrl;
 
   toggleMenu(): void {
     this.isMenuOpen = !this.isMenuOpen;

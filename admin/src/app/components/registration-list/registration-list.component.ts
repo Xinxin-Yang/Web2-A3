@@ -45,11 +45,10 @@ export class RegistrationListComponent implements OnInit {
     this.loading = true;
     
     // 加载活动详情
-    this.eventService.getAllEvents().subscribe({
+    this.eventService.getEventById(this.eventId).subscribe({
       next: (eventResponse: any) => {
         if (eventResponse.success) {
-          // 从事件列表中查找当前事件
-          this.event = eventResponse.data.find((event: Event) => event.id === this.eventId) || null;
+          this.event = eventResponse.data;
           this.loadRegistrations();
         } else {
           this.error = 'Event not found';

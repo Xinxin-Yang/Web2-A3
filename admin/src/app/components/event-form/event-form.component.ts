@@ -128,14 +128,27 @@ export class EventFormComponent implements OnInit {
         max_attendees: formValue.max_attendees || null
       };
 
-      // 模拟保存
-      setTimeout(() => {
-        this.submitting = false;
-        const message = this.isEditMode ? 'Event updated successfully!' : 'Event created successfully!';
-        alert(message);
-        this.router.navigate(['/events']);
-      }, 1000);
-      
+      const operation = this.isEditMode 
+        ? this.eventService.updateEvent(this.eventId!, eventData)
+        : this.eventService.createEvent(eventData);
+
+      operation.subscribe({
+        next: (response: any) => {
+          this.submitting = false;
+          if (response.success) {
+            const message = this.isEditMode ? 'Event updated successfully!' : 'Event created successfully!';
+            alert(message);
+            this.router.navigate(['/events']);
+          } else {
+            alert(response.message || 'Operation failed');
+          }
+        },
+        error: (error: any) => {
+          this.submitting = false;
+          console.error('Error saving event:', error);
+          alert('Error saving event: ' + (error.message || 'Unknown error'));
+        }
+      });
     } else {
       this.markFormGroupTouched();
       alert('Please fill in all required fields correctly.');
