@@ -111,11 +111,13 @@ router.get('/search', async (req, res) => {
 });
 
 // Get event by ID
+// 在 events.js 中添加这个端点
 router.get('/:id', async (req, res) => {
   try {
     const eventId = req.params.id;
     
-    const sql = `
+    // 获取事件基本信息
+    const eventSql = `
       SELECT 
         e.*,
         c.name as category_name,
@@ -125,7 +127,7 @@ router.get('/:id', async (req, res) => {
       WHERE e.id = ? AND e.is_active = 1
     `;
     
-    const events = await query(sql, [eventId]);
+    const events = await query(eventSql, [eventId]);
     
     if (events.length === 0) {
       return res.status(404).json({
@@ -133,10 +135,33 @@ router.get('/:id', async (req, res) => {
         message: 'Event not found'
       });
     }
+
+    const event = events[0];
+
+    // 获取该事件的注册列表
+    const registrationsSql = `
+      SELECT 
+        id,
+        full_name,
+        email,
+        phone,
+        ticket_quantity,
+        total_amount,
+        registration_date
+      FROM registrations 
+      WHERE event_id = ?
+      ORDER BY registration_date DESC
+    `;
     
+    const registrations = await query(registrationsSql, [eventId]);
+
+    // 合并数据返回
     res.json({
       success: true,
-      data: events[0]
+      data: {
+        ...event,
+        registrations: registrations
+      }
     });
   } catch (error) {
     console.error('Error fetching event:', error);

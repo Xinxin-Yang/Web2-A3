@@ -219,6 +219,80 @@
       </div>
     </div>
 
+        <!-- 注册数据概览 (仅在编辑模式显示) -->
+    <div *ngIf="isEditMode" class="form-section">
+      <h3>👥 Registration Overview</h3>
+      
+      <div class="registration-overview">
+        <!-- 加载状态 -->
+        <div *ngIf="registrationsLoading" class="loading-small">
+          <div class="spinner-small"></div>
+          <p>Loading registration data...</p>
+        </div>
+
+        <!-- 注册统计 -->
+        <div *ngIf="!registrationsLoading" class="registration-stats">
+          <div class="stat-cards">
+            <div class="stat-card">
+              <div class="stat-icon">👥</div>
+              <div class="stat-info">
+                <h4>{{ registrations.length }}</h4>
+                <p>Total Registrations</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">🎫</div>
+              <div class="stat-info">
+                <h4>{{ getTotalTickets() }}</h4>
+                <p>Total Tickets</p>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">💰</div>
+              <div class="stat-info">
+                <h4>{{ formatCurrency(getTotalRevenue()) }}</h4>
+                <p>Total Revenue</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 最近注册 -->
+          <div *ngIf="registrations.length > 0" class="recent-registrations">
+            <h4>Recent Registrations</h4>
+            <div class="registrations-list">
+              <div *ngFor="let registration of registrations.slice(0, 3)" class="registration-item">
+                <div class="registration-avatar">
+                  {{ registration.full_name.charAt(0) }}
+                </div>
+                <div class="registration-details">
+                  <strong>{{ registration.full_name }}</strong>
+                  <div class="registration-meta">
+                    <span>{{ registration.ticket_quantity }} ticket(s)</span>
+                    <span class="amount">{{ formatCurrency(registration.total_amount) }}</span>
+                  </div>
+                  <small>{{ formatDate(registration.registration_date) }}</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- 查看全部链接 -->
+            <div class="view-all-link">
+              <a [routerLink]="['/events', eventId, 'registrations']" class="btn btn-outline">
+                View All Registrations ({{ registrations.length }})
+              </a>
+            </div>
+          </div>
+
+          <!-- 无注册数据 -->
+          <div *ngIf="registrations.length === 0" class="no-registrations">
+            <div class="no-data-icon">📝</div>
+            <h4>No Registrations Yet</h4>
+            <p>Registrations will appear here once people start signing up for your event.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 表单操作 -->
     <div class="form-actions">
       <button type="button" class="btn btn-secondary" (click)="onCancel()" [disabled]="submitting">
