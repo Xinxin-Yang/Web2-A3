@@ -9,19 +9,39 @@ router.get('/', async (req, res) => {
       SELECT 
         e.*,
         c.name as category_name,
-        c.description as category_description
+        c.description as category_description,
+        COALESCE(SUM(r.ticket_quantity), 0) as registered_tickets
       FROM events e
       JOIN categories c ON e.category_id = c.id
+      LEFT JOIN registrations r ON e.id = r.event_id
       WHERE e.is_active = 1
+      GROUP BY e.id, c.name, c.description
       ORDER BY e.date_time ASC
     `;
     
     const events = await query(sql);
     
+    // 计算可用票数和筹款进度百分比
+    const eventsWithCalculations = events.map(event => {
+      const now = new Date();
+      const eventDate = new Date(event.date_time);
+      const isPastEvent = eventDate < now;
+      
+      return {
+        ...event,
+        available_tickets: event.max_attendees ? Math.max(0, event.max_attendees - event.registered_tickets) : null,
+        // 筹款进度直接使用数据库中的 current_amount 和 goal_amount
+        progress_percentage: event.goal_amount > 0 ? Math.min(Math.round((event.current_amount / event.goal_amount) * 100), 100) : 0,
+        is_almost_full: event.max_attendees && (event.max_attendees - event.registered_tickets) <= 5 && (event.max_attendees - event.registered_tickets) > 0,
+        is_full: event.max_attendees && (event.max_attendees - event.registered_tickets) <= 0,
+        is_past_event: isPastEvent
+      };
+    });
+    
     res.json({
       success: true,
-      data: events,
-      count: events.length
+      data: eventsWithCalculations,
+      count: eventsWithCalculations.length
     });
   } catch (error) {
     console.error('Error fetching events:', error);
@@ -61,9 +81,11 @@ router.get('/search', async (req, res) => {
     let sql = `
       SELECT 
         e.*,
-        c.name as category_name
+        c.name as category_name,
+        COALESCE(SUM(r.ticket_quantity), 0) as registered_tickets
       FROM events e
       JOIN categories c ON e.category_id = c.id
+      LEFT JOIN registrations r ON e.id = r.event_id
       WHERE e.is_active = 1
     `;
     
@@ -90,14 +112,31 @@ router.get('/search', async (req, res) => {
       params.push(category_id);
     }
     
-    sql += ' ORDER BY e.date_time ASC';
+    sql += ' GROUP BY e.id, c.name ORDER BY e.date_time ASC';
     
     const events = await query(sql, params);
     
+    // 计算可用票数和筹款进度百分比
+    const eventsWithCalculations = events.map(event => {
+      const now = new Date();
+      const eventDate = new Date(event.date_time);
+      const isPastEvent = eventDate < now;
+      
+      return {
+        ...event,
+        available_tickets: event.max_attendees ? Math.max(0, event.max_attendees - event.registered_tickets) : null,
+        // 筹款进度直接使用数据库中的 current_amount 和 goal_amount
+        progress_percentage: event.goal_amount > 0 ? Math.min(Math.round((event.current_amount / event.goal_amount) * 100), 100) : 0,
+        is_almost_full: event.max_attendees && (event.max_attendees - event.registered_tickets) <= 5 && (event.max_attendees - event.registered_tickets) > 0,
+        is_full: event.max_attendees && (event.max_attendees - event.registered_tickets) <= 0,
+        is_past_event: isPastEvent
+      };
+    });
+    
     res.json({
       success: true,
-      data: events,
-      count: events.length,
+      data: eventsWithCalculations,
+      count: eventsWithCalculations.length,
       filters: { date, location, category, category_id }
     });
   } catch (error) {
@@ -119,10 +158,13 @@ router.get('/:id', async (req, res) => {
       SELECT 
         e.*,
         c.name as category_name,
-        c.description as category_description
+        c.description as category_description,
+        COALESCE(SUM(r.ticket_quantity), 0) as registered_tickets
       FROM events e
       JOIN categories c ON e.category_id = c.id
+      LEFT JOIN registrations r ON e.id = r.event_id
       WHERE e.id = ? AND e.is_active = 1
+      GROUP BY e.id, c.name, c.description
     `;
     
     const events = await query(sql, [eventId]);
@@ -134,48 +176,41 @@ router.get('/:id', async (req, res) => {
       });
     }
     
+    const event = events[0];
+    
+    // 添加调试信息
+    console.log('📊 Event data from database:', {
+      id: event.id,
+      name: event.name,
+      current_amount: event.current_amount,
+      goal_amount: event.goal_amount,
+      progress: (event.current_amount / event.goal_amount * 100).toFixed(2) + '%'
+    });
+    
+    // 计算可用票数和筹款进度百分比
+    const now = new Date();
+    const eventDate = new Date(event.date_time);
+    const isPastEvent = eventDate < now;
+    
+    const eventWithCalculations = {
+      ...event,
+      available_tickets: event.max_attendees ? Math.max(0, event.max_attendees - event.registered_tickets) : null,
+      // 筹款进度直接使用数据库中的 current_amount 和 goal_amount
+      progress_percentage: event.goal_amount > 0 ? Math.min(Math.round((event.current_amount / event.goal_amount) * 100), 100) : 0,
+      is_almost_full: event.max_attendees && (event.max_attendees - event.registered_tickets) <= 5 && (event.max_attendees - event.registered_tickets) > 0,
+      is_full: event.max_attendees && (event.max_attendees - event.registered_tickets) <= 0,
+      is_past_event: isPastEvent
+    };
+    
     res.json({
       success: true,
-      data: events[0]
+      data: eventWithCalculations
     });
   } catch (error) {
     console.error('Error fetching event:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch event',
-      error: error.message
-    });
-  }
-});
-
-// Get events by category
-router.get('/category/:categoryId', async (req, res) => {
-  try {
-    const categoryId = req.params.categoryId;
-    
-    const sql = `
-      SELECT 
-        e.*,
-        c.name as category_name
-      FROM events e
-      JOIN categories c ON e.category_id = c.id
-      WHERE e.category_id = ? 
-      AND e.is_active = 1
-      ORDER BY e.date_time ASC
-    `;
-    
-    const events = await query(sql, [categoryId]);
-    
-    res.json({
-      success: true,
-      data: events,
-      count: events.length
-    });
-  } catch (error) {
-    console.error('Error fetching events by category:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch events by category',
       error: error.message
     });
   }
@@ -191,10 +226,13 @@ router.get('/:id/with-registrations', async (req, res) => {
       SELECT 
         e.*,
         c.name as category_name,
-        c.description as category_description
+        c.description as category_description,
+        COALESCE(SUM(r.ticket_quantity), 0) as registered_tickets
       FROM events e
       JOIN categories c ON e.category_id = c.id
+      LEFT JOIN registrations r ON e.id = r.event_id
       WHERE e.id = ?
+      GROUP BY e.id, c.name, c.description
     `;
     
     const events = await query(eventSql, [eventId]);
@@ -215,10 +253,27 @@ router.get('/:id/with-registrations', async (req, res) => {
     
     const registrations = await query(registrationsSql, [eventId]);
     
+    const event = events[0];
+    
+    // 计算可用票数和筹款进度百分比
+    const now = new Date();
+    const eventDate = new Date(event.date_time);
+    const isPastEvent = eventDate < now;
+    
+    const eventWithCalculations = {
+      ...event,
+      available_tickets: event.max_attendees ? Math.max(0, event.max_attendees - event.registered_tickets) : null,
+      // 筹款进度直接使用数据库中的 current_amount 和 goal_amount
+      progress_percentage: event.goal_amount > 0 ? Math.min(Math.round((event.current_amount / event.goal_amount) * 100), 100) : 0,
+      is_almost_full: event.max_attendees && (event.max_attendees - event.registered_tickets) <= 5 && (event.max_attendees - event.registered_tickets) > 0,
+      is_full: event.max_attendees && (event.max_attendees - event.registered_tickets) <= 0,
+      is_past_event: isPastEvent
+    };
+    
     res.json({
       success: true,
       data: {
-        ...events[0],
+        ...eventWithCalculations,
         registrations: registrations
       }
     });
@@ -227,161 +282,6 @@ router.get('/:id/with-registrations', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch event details',
-      error: error.message
-    });
-  }
-});
-
-// 创建新活动
-router.post('/', async (req, res) => {
-  try {
-    const {
-      name,
-      short_description,
-      full_description,
-      date_time,
-      location,
-      address,
-      category_id,
-      ticket_price,
-      ticket_type,
-      goal_amount,
-      max_attendees
-    } = req.body;
-
-    // 验证必需字段
-    if (!name || !date_time || !location || !category_id) {
-      return res.status(400).json({
-        success: false,
-        message: 'Missing required fields'
-      });
-    }
-
-    const sql = `
-      INSERT INTO events (
-        name, short_description, full_description, date_time, 
-        location, address, category_id, ticket_price, 
-        ticket_type, goal_amount, max_attendees
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-
-    const result = await query(sql, [
-      name, short_description || '', full_description || '', date_time,
-      location, address || '', category_id, ticket_price || 0,
-      ticket_type || 'free', goal_amount || 0, max_attendees || null
-    ]);
-
-    res.json({
-      success: true,
-      message: 'Event created successfully',
-      data: {
-        id: result.insertId
-      }
-    });
-  } catch (error) {
-    console.error('Error creating event:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to create event',
-      error: error.message
-    });
-  }
-});
-
-// 更新活动
-router.put('/:id', async (req, res) => {
-  try {
-    const eventId = req.params.id;
-    const {
-      name,
-      short_description,
-      full_description,
-      date_time,
-      location,
-      address,
-      category_id,
-      ticket_price,
-      ticket_type,
-      goal_amount,
-      current_amount,
-      is_active,
-      max_attendees
-    } = req.body;
-
-    // 检查活动是否存在
-    const checkSql = 'SELECT id FROM events WHERE id = ?';
-    const existingEvent = await query(checkSql, [eventId]);
-    
-    if (existingEvent.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Event not found'
-      });
-    }
-
-    const sql = `
-      UPDATE events SET
-        name = ?, short_description = ?, full_description = ?, date_time = ?,
-        location = ?, address = ?, category_id = ?, ticket_price = ?,
-        ticket_type = ?, goal_amount = ?, current_amount = ?, is_active = ?, max_attendees = ?,
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `;
-
-    await query(sql, [
-      name, short_description, full_description, date_time,
-      location, address, category_id, ticket_price,
-      ticket_type, goal_amount, current_amount, is_active, max_attendees,
-      eventId
-    ]);
-
-    res.json({
-      success: true,
-      message: 'Event updated successfully'
-    });
-  } catch (error) {
-    console.error('Error updating event:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update event',
-      error: error.message
-    });
-  }
-});
-
-// 删除活动
-router.delete('/:id', async (req, res) => {
-  try {
-    const eventId = req.params.id;
-
-    // 检查是否有注册记录
-    const registrationsCheck = `
-      SELECT COUNT(*) as registration_count 
-      FROM registrations 
-      WHERE event_id = ?
-    `;
-    
-    const registrationResult = await query(registrationsCheck, [eventId]);
-    
-    if (registrationResult[0].registration_count > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Cannot delete event with existing registrations'
-      });
-    }
-
-    const sql = 'DELETE FROM events WHERE id = ?';
-    await query(sql, [eventId]);
-
-    res.json({
-      success: true,
-      message: 'Event deleted successfully'
-    });
-  } catch (error) {
-    console.error('Error deleting event:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete event',
       error: error.message
     });
   }
@@ -408,10 +308,15 @@ router.post('/:id/register', async (req, res) => {
 
     // 检查活动是否存在且活跃
     const eventCheck = `
-      SELECT e.*, c.name as category_name 
+      SELECT 
+        e.*, 
+        c.name as category_name,
+        COALESCE(SUM(r.ticket_quantity), 0) as registered_tickets
       FROM events e 
       JOIN categories c ON e.category_id = c.id 
+      LEFT JOIN registrations r ON e.id = r.event_id
       WHERE e.id = ? AND e.is_active = 1
+      GROUP BY e.id, c.name
     `;
     
     const events = await query(eventCheck, [eventId]);
@@ -425,8 +330,26 @@ router.post('/:id/register', async (req, res) => {
 
     const event = events[0];
     
-    // 计算总金额
-    const total_amount = event.ticket_price * ticket_quantity;
+    // 检查活动是否已过期
+    const now = new Date();
+    const eventDate = new Date(event.date_time);
+    if (eventDate < now) {
+      return res.status(400).json({
+        success: false,
+        message: 'This event has already ended. Registration is no longer available.'
+      });
+    }
+    
+    // 检查票数限制
+    if (event.max_attendees) {
+      const availableTickets = event.max_attendees - event.registered_tickets;
+      if (availableTickets < ticket_quantity) {
+        return res.status(400).json({
+          success: false,
+          message: `Only ${availableTickets} tickets available. You requested ${ticket_quantity} tickets.`
+        });
+      }
+    }
 
     // 检查是否已经注册
     const existingRegistration = await query(
@@ -441,6 +364,9 @@ router.post('/:id/register', async (req, res) => {
       });
     }
 
+    // 计算票务金额
+    const ticket_amount = event.ticket_price * ticket_quantity;
+
     // 插入注册记录
     const sql = `
       INSERT INTO registrations (
@@ -449,8 +375,21 @@ router.post('/:id/register', async (req, res) => {
     `;
 
     const result = await query(sql, [
-      eventId, full_name, email, phone || null, ticket_quantity, total_amount
+      eventId, full_name, email, phone || null, ticket_quantity, ticket_amount
     ]);
+
+    // 关键修复：累加到现有筹款金额
+    console.log('🎫 Event registration fundraising:', {
+      event_id: eventId,
+      current_amount_before: event.current_amount,
+      ticket_amount: ticket_amount,
+      new_amount: parseFloat(event.current_amount) + ticket_amount
+    });
+
+    await query(
+      'UPDATE events SET current_amount = current_amount + ? WHERE id = ?',
+      [ticket_amount, eventId]
+    );
 
     res.json({
       success: true,
@@ -466,7 +405,7 @@ router.post('/:id/register', async (req, res) => {
           full_name,
           email,
           ticket_quantity,
-          total_amount: total_amount
+          total_amount: ticket_amount
         }
       }
     });
