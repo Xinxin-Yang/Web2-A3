@@ -150,11 +150,14 @@ router.get('/search', async (req, res) => {
 });
 
 // Get event by ID
+// 在 events.js 中添加这个端点
+// Get event by ID
 router.get('/:id', async (req, res) => {
   try {
     const eventId = req.params.id;
     
-    const sql = `
+    // 获取事件基本信息
+    const eventSql = `
       SELECT 
         e.*,
         c.name as category_name,
@@ -167,7 +170,7 @@ router.get('/:id', async (req, res) => {
       GROUP BY e.id, c.name, c.description
     `;
     
-    const events = await query(sql, [eventId]);
+    const events = await query(eventSql, [eventId]);
     
     if (events.length === 0) {
       return res.status(404).json({
@@ -175,9 +178,26 @@ router.get('/:id', async (req, res) => {
         message: 'Event not found'
       });
     }
-    
+
     const event = events[0];
+
+    // 获取该事件的注册列表
+    const registrationsSql = `
+      SELECT 
+        id,
+        full_name,
+        email,
+        phone,
+        ticket_quantity,
+        total_amount,
+        registration_date
+      FROM registrations 
+      WHERE event_id = ?
+      ORDER BY registration_date DESC
+    `;
     
+    const registrations = await query(registrationsSql, [eventId]);
+
     // 添加调试信息
     console.log('📊 Event data from database:', {
       id: event.id,
@@ -202,9 +222,13 @@ router.get('/:id', async (req, res) => {
       is_past_event: isPastEvent
     };
     
+    // 合并数据返回
     res.json({
       success: true,
-      data: eventWithCalculations
+      data: {
+        ...eventWithCalculations,
+        registrations: registrations
+      }
     });
   } catch (error) {
     console.error('Error fetching event:', error);
@@ -243,6 +267,8 @@ router.get('/:id/with-registrations', async (req, res) => {
         message: 'Event not found'
       });
     }
+
+    const event = events[0];
     
     // 获取注册信息
     const registrationsSql = `
@@ -252,8 +278,6 @@ router.get('/:id/with-registrations', async (req, res) => {
     `;
     
     const registrations = await query(registrationsSql, [eventId]);
-    
-    const event = events[0];
     
     // 计算可用票数和筹款进度百分比
     const now = new Date();

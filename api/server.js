@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const eventsRouter = require('./events');
-const registrationsRouter = require('./registrations');
+const adminRouter = require('./admin');
 const { connectDB } = require('./database/event_db');
 
 const app = express();
@@ -22,7 +22,7 @@ connectDB().then(success => {
 
 // 路由
 app.use('/api/events', eventsRouter);
-app.use('/api/registrations', registrationsRouter);
+app.use('/api/admin', adminRouter);
 
 // 健康检查端点
 app.get('/api/health', async (req, res) => {
