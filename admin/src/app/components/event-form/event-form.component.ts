@@ -108,31 +108,31 @@ export class EventFormComponent implements OnInit {
   }
 
   loadEventData(): void {
-    if (this.isEditMode && this.eventId) {
-      this.loading = true;
-      console.log('🔄 加载事件数据，ID:', this.eventId);
-      
-      this.eventService.getEventById(this.eventId).subscribe({
-        next: (response: any) => {
-          console.log('✅ 事件数据加载成功:', response);
-          this.loading = false;
-          if (response.success) {
-            this.eventForm.patchValue(response.data);
-            this.onTicketTypeChange(response.data.ticket_type);
-          } else {
-            alert('Failed to load event data: ' + (response.message || 'Unknown error'));
-          }
-        },
-        error: (error: any) => {
-          console.error('❌ 事件数据加载失败:', error);
-          this.loading = false;
-          alert('Error loading event data: ' + error.message);
+  if (this.isEditMode && this.eventId) {
+    this.loading = true;
+    console.log('🔄 加载事件数据，ID:', this.eventId);
+    
+    this.eventService.getEventById(this.eventId).subscribe({
+      next: (response: any) => {
+        console.log('✅ 事件数据加载成功:', response);
+        this.loading = false;
+        if (response.success) {
+          this.eventForm.patchValue(response.data);
+          this.onTicketTypeChange(response.data.ticket_type);
+        } else {
+          alert('Failed to load event data: ' + (response.message || 'Unknown error'));
         }
-      });
-    } else {
-      this.loading = false;
-    }
+      },
+      error: (error: any) => {
+        console.error('❌ 事件数据加载失败:', error);
+        this.loading = false;
+        alert('Error loading event data: ' + error.message);
+      }
+    });
+  } else {
+    this.loading = false;
   }
+}
 
   loadEventRegistrations(): void {
     if (!this.eventId) return;
@@ -176,50 +176,50 @@ export class EventFormComponent implements OnInit {
       console.log('🔄 提交事件数据:', eventData);
 
       if (this.isEditMode && this.eventId) {
-        // 编辑模式：调用更新API
-        this.eventService.updateEvent(this.eventId, eventData).subscribe({
-          next: (response: any) => {
-            console.log('✅ 事件更新成功:', response);
-            this.submitting = false;
-            if (response.success) {
-              alert('Event updated successfully!');
-              this.router.navigate(['/events']);
-            } else {
-              alert('Failed to update event: ' + (response.message || 'Unknown error'));
-            }
-          },
-          error: (error: any) => {
-            console.error('❌ 事件更新失败:', error);
-            this.submitting = false;
-            alert('Error updating event: ' + error.message);
+      // 编辑模式：调用更新API
+      this.eventService.updateEvent(this.eventId, eventData).subscribe({
+        next: (response: any) => {
+          console.log('✅ 事件更新成功:', response);
+          this.submitting = false;
+          if (response.success) {
+            alert('Event updated successfully!');
+            this.router.navigate(['/events']);
+          } else {
+            alert('Failed to update event: ' + (response.message || 'Unknown error'));
           }
-        });
-      } else {
-        // 创建模式：调用创建API
-        this.eventService.createEvent(eventData).subscribe({
-          next: (response: any) => {
-            console.log('✅ 事件创建成功:', response);
-            this.submitting = false;
-            if (response.success) {
-              alert('Event created successfully!');
-              this.router.navigate(['/events']);
-            } else {
-              alert('Failed to create event: ' + (response.message || 'Unknown error'));
-            }
-          },
-          error: (error: any) => {
-            console.error('❌ 事件创建失败:', error);
-            this.submitting = false;
-            alert('Error creating event: ' + error.message);
-          }
-        });
-      }
-      
+        },
+        error: (error: any) => {
+          console.error('❌ 事件更新失败:', error);
+          this.submitting = false;
+          alert('Error updating event: ' + error.message);
+        }
+      });
     } else {
-      this.markFormGroupTouched();
-      alert('Please fill in all required fields correctly.');
+      // 创建模式：调用创建API
+      this.eventService.createEvent(eventData).subscribe({
+        next: (response: any) => {
+          console.log('✅ 事件创建成功:', response);
+          this.submitting = false;
+          if (response.success) {
+            alert('Event created successfully!');
+            this.router.navigate(['/events']);
+          } else {
+            alert('Failed to create event: ' + (response.message || 'Unknown error'));
+          }
+        },
+        error: (error: any) => {
+          console.error('❌ 事件创建失败:', error);
+          this.submitting = false;
+          alert('Error creating event: ' + error.message);
+        }
+      });
     }
+    
+  } else {
+    this.markFormGroupTouched();
+    alert('Please fill in all required fields correctly.');
   }
+}
 
   markFormGroupTouched(): void {
     Object.keys(this.eventForm.controls).forEach(key => {
