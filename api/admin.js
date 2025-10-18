@@ -67,6 +67,7 @@ router.get('/events/:id/registrations', async (req, res) => {
 });
 
 // 创建新事件
+// 创建新事件 - 修复版本
 router.post('/events', async (req, res) => {
   try {
     const {
@@ -80,7 +81,9 @@ router.post('/events', async (req, res) => {
       ticket_price,
       ticket_type,
       goal_amount,
-      max_attendees
+      current_amount, // 添加这个字段
+      max_attendees,
+      is_active // 添加这个字段
     } = req.body;
 
     // 验证必填字段
@@ -95,8 +98,8 @@ router.post('/events', async (req, res) => {
       INSERT INTO events (
         name, short_description, full_description, date_time, 
         location, address, category_id, ticket_price, ticket_type, 
-        goal_amount, max_attendees, is_active
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+        goal_amount, current_amount, max_attendees, is_active
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const params = [
@@ -110,8 +113,13 @@ router.post('/events', async (req, res) => {
       ticket_price || 0,
       ticket_type || 'free',
       goal_amount || 0,
-      max_attendees
+      current_amount || 0, // 使用前端发送的 current_amount
+      max_attendees,
+      is_active !== undefined ? is_active : 1 // 使用前端发送的 is_active，如果没有则默认1
     ];
+
+    console.log('🔧 后端接收到的数据:', req.body);
+    console.log('🔧 准备插入数据库的数据:', params);
 
     const result = await query(sql, params);
     

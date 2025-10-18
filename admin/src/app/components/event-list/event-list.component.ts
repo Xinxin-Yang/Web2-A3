@@ -24,6 +24,18 @@ export class EventListComponent implements OnInit {
       next: (response: any) => {
         if (response.success) {
           this.events = response.data;
+
+          // 调试：检查每个事件的金额和状态
+          this.events.forEach((event, index) => {
+            console.log(`📊 事件 ${index + 1}:`, {
+              id: event.id,
+              name: event.name,
+              current_amount: event.current_amount,
+              is_active: event.is_active,
+              '应该显示的状态': this.shouldShowAsActive(event) // 添加这个
+            });
+          }); 
+
         } else {
           this.error = 'Failed to load events';
         }
@@ -35,6 +47,13 @@ export class EventListComponent implements OnInit {
         console.error('Error loading events:', error);
       }
     });
+  }
+
+  // 添加状态判断方法
+  shouldShowAsActive(event: any): boolean {
+    // 这里可以根据需要自定义逻辑
+    // 暂时返回后端的数据
+    return Boolean(event.is_active);
   }
 
   deleteEvent(eventId: number): void {
@@ -75,5 +94,18 @@ export class EventListComponent implements OnInit {
   getProgressPercentage(event: Event): number {
     if (event.goal_amount === 0) return 0;
     return Math.min(Math.round((event.current_amount / event.goal_amount) * 100), 100);
+  }
+
+  // 在 event-list.component.ts 中添加修复方法
+  formatEventData(events: any[]): any[] {
+    return events.map(event => {
+      // 修复金额显示：如果事件有注册，使用注册金额 + 事件金额
+      if (event.registration_count > 0) {
+        // 这里可以添加逻辑来计算真实金额
+        // 暂时先返回原始数据
+        return event;
+      }
+      return event;
+    });
   }
 }

@@ -38,14 +38,14 @@ export class RegistrationListComponent implements OnInit {
       this.loadEventAndRegistrations();
     });
   }
-
+  
   loadEventAndRegistrations(): void {
     if (!this.eventId) return;
 
     this.loading = true;
     
-    // 加载活动详情
-    this.eventService.getEventById(this.eventId).subscribe({
+    // 使用管理端 API 加载活动详情（包含 Inactive 事件）
+    this.eventService.getEventByIdForAdmin(this.eventId).subscribe({
       next: (eventResponse: any) => {
         if (eventResponse.success) {
           this.event = eventResponse.data;
@@ -69,7 +69,19 @@ export class RegistrationListComponent implements OnInit {
     this.registrationService.getEventRegistrations(this.eventId).subscribe({
       next: (response: any) => {
         if (response.success) {
-          this.registrations = response.data;
+          // 数据清理：确保所有金额字段都是有效数字
+          this.registrations = (response.data || []).map((reg: any) => ({
+            ...reg,
+            total_amount: this.ensureValidNumber(reg.total_amount),
+            ticket_quantity: this.ensureValidNumber(reg.ticket_quantity)
+          }));
+          
+          console.log('💰 金额计算详情:', {
+            '活动金额': this.getEventCurrentAmount(),
+            '注册总金额': this.getRegistrationsRevenue(),
+            '合计金额': this.getTotalRevenue()
+          });
+          
           this.applyFilters();
         } else {
           this.error = 'Failed to load registrations';
@@ -83,6 +95,26 @@ export class RegistrationListComponent implements OnInit {
       }
     });
   }
+
+  // 辅助方法：确保数字有效，处理字符串数字
+  ensureValidNumber(value: any): number {
+    if (value === null || value === undefined) {
+      return 0;
+    }
+    
+    // 处理字符串情况
+    if (typeof value === 'string') {
+      // 移除所有非数字字符（除了小数点和负号）
+      const cleaned = value.replace(/[^\d.-]/g, '');
+      const num = parseFloat(cleaned);
+      return isNaN(num) ? 0 : num;
+    }
+    
+    // 处理数字情况
+    const num = Number(value);
+    return isNaN(num) ? 0 : num;
+  }
+
 
   applyFilters(): void {
     let filtered = this.registrations;
@@ -184,7 +216,35 @@ export class RegistrationListComponent implements OnInit {
     return this.registrations.reduce((sum, reg) => sum + reg.ticket_quantity, 0);
   }
 
+  // 计算总金额：活动金额 + 注册金额
   getTotalRevenue(): number {
-    return this.registrations.reduce((sum, reg) => sum + reg.total_amount, 0);
+    const eventAmount = this.ensureValidNumber(this.event?.current_amount);
+    const registrationsTotal = this.getRegistrationsRevenue();
+    const total = eventAmount + registrationsTotal;
+    
+    console.log('🔢 详细计算:', {
+      '原始活动金额': this.event?.current_amount,
+      '转换后活动金额': eventAmount,
+      '注册总金额': registrationsTotal,
+      '合计金额': total
+    });
+    
+    return total;
+  }
+
+  // 计算注册总金额
+  getRegistrationsRevenue(): number {
+    if (!this.registrations || this.registrations.length === 0) {
+      return 0;
+    }
+    
+    return this.registrations.reduce((sum, reg) => {
+      return sum + this.ensureValidNumber(reg.total_amount);
+    }, 0);
+  }
+
+  // 获取活动原始金额
+  getEventCurrentAmount(): number {
+    return this.ensureValidNumber(this.event?.current_amount);
   }
 }

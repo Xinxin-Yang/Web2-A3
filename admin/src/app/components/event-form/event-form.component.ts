@@ -30,6 +30,7 @@ export class EventFormComponent implements OnInit {
   eventForm: FormGroup;
   isEditMode = false;
   eventId: number | null = null;
+  event: any = null; // 添加 event 属性
   loading = true;
   submitting = false;
   categories: any[] = [];
@@ -52,11 +53,10 @@ export class EventFormComponent implements OnInit {
     this.eventForm = this.createForm();
   }
 
-  // ... 其余代码保持不变
+  // 在 ngOnInit 中添加复选框状态监听
   ngOnInit(): void {
     this.loadCategories();
     
-    // 检查是否是编辑模式
     this.route.params.subscribe(params => {
       if (params['id']) {
         this.isEditMode = true;
@@ -64,15 +64,23 @@ export class EventFormComponent implements OnInit {
         this.formTitle = 'Edit Event';
         this.submitButtonText = 'Update Event';
         this.loadEventData();
-        this.loadEventRegistrations(); // 加载注册数据
+        this.loadEventRegistrations();
       } else {
         this.loading = false;
+        // 创建模式：设置默认值
+        this.eventForm.patchValue({
+          is_active: true // 确保创建时默认是 true
+        });
       }
     });
 
-    // 监听票务类型变化
     this.eventForm.get('ticket_type')?.valueChanges.subscribe(value => {
       this.onTicketTypeChange(value);
+    });
+
+    // 监听复选框变化
+    this.eventForm.get('is_active')?.valueChanges.subscribe(value => {
+      console.log('🔘 is_active 复选框值变化:', value);
     });
   }
 
@@ -90,7 +98,7 @@ export class EventFormComponent implements OnInit {
       goal_amount: [0, [Validators.min(0)]],
       current_amount: [0, [Validators.min(0)]],
       max_attendees: [null, [Validators.min(1)]],
-      is_active: [true]
+      is_active: [true] // 默认值为 true，确保创建时是 Active 状态
     });
   }
 
@@ -108,31 +116,33 @@ export class EventFormComponent implements OnInit {
   }
 
   loadEventData(): void {
-  if (this.isEditMode && this.eventId) {
-    this.loading = true;
-    console.log('🔄 加载事件数据，ID:', this.eventId);
-    
-    this.eventService.getEventById(this.eventId).subscribe({
-      next: (response: any) => {
-        console.log('✅ 事件数据加载成功:', response);
-        this.loading = false;
-        if (response.success) {
-          this.eventForm.patchValue(response.data);
-          this.onTicketTypeChange(response.data.ticket_type);
-        } else {
-          alert('Failed to load event data: ' + (response.message || 'Unknown error'));
+    if (this.isEditMode && this.eventId) {
+      this.loading = true;
+      console.log('🔄 加载事件数据，ID:', this.eventId);
+      
+      // 使用管理端 API 加载事件数据（包含 Inactive 事件）
+      this.eventService.getEventByIdForAdmin(this.eventId).subscribe({
+        next: (response: any) => {
+          console.log('✅ 事件数据加载成功:', response);
+          this.loading = false;
+          if (response.success) {
+            this.event = response.data;
+            this.eventForm.patchValue(response.data);
+            this.onTicketTypeChange(response.data.ticket_type);
+          } else {
+            alert('Failed to load event data: ' + (response.message || 'Unknown error'));
+          }
+        },
+        error: (error: any) => {
+          console.error('❌ 事件数据加载失败:', error);
+          this.loading = false;
+          alert('Error loading event data: ' + error.message);
         }
-      },
-      error: (error: any) => {
-        console.error('❌ 事件数据加载失败:', error);
-        this.loading = false;
-        alert('Error loading event data: ' + error.message);
-      }
-    });
-  } else {
-    this.loading = false;
+      });
+    } else {
+      this.loading = false;
+    }
   }
-}
 
   loadEventRegistrations(): void {
     if (!this.eventId) return;
@@ -164,62 +174,93 @@ export class EventFormComponent implements OnInit {
 
   onSubmit(): void {
     if (this.eventForm.valid) {
+      const formValue = this.eventForm.getRawValue();
       this.submitting = true;
       
-      const formValue = this.eventForm.getRawValue();
+      // 转换日期时间格式
+      let formattedDateTime = formValue.date_time;
+      if (formValue.date_time) {
+        formattedDateTime = this.formatDateTimeForDatabase(formValue.date_time);
+      }
+      
+      // 创建精确的数据对象，避免多余字段
       const eventData = {
-        ...formValue,
-        ticket_price: formValue.ticket_type === 'free' ? 0 : formValue.ticket_price,
-        max_attendees: formValue.max_attendees || null
+        name: formValue.name,
+        short_description: formValue.short_description,
+        full_description: formValue.full_description || '',
+        date_time: formattedDateTime,
+        location: formValue.location,
+        address: formValue.address || '',
+        category_id: Number(formValue.category_id),
+        ticket_price: formValue.ticket_type === 'free' ? 0 : Number(formValue.ticket_price),
+        ticket_type: formValue.ticket_type,
+        goal_amount: Number(formValue.goal_amount),
+        current_amount: Number(formValue.current_amount), // 确保是数字
+        max_attendees: formValue.max_attendees ? Number(formValue.max_attendees) : null,
+        is_active: formValue.is_active ? 1 : 0 // 使用 1/0 而不是布尔值
       };
 
-      console.log('🔄 提交事件数据:', eventData);
+      console.log('🎯 最终提交数据:', JSON.stringify(eventData, null, 2));
 
       if (this.isEditMode && this.eventId) {
-      // 编辑模式：调用更新API
-      this.eventService.updateEvent(this.eventId, eventData).subscribe({
-        next: (response: any) => {
-          console.log('✅ 事件更新成功:', response);
-          this.submitting = false;
-          if (response.success) {
-            alert('Event updated successfully!');
-            this.router.navigate(['/events']);
-          } else {
-            alert('Failed to update event: ' + (response.message || 'Unknown error'));
+        this.eventService.updateEvent(this.eventId, eventData).subscribe({
+          next: (response: any) => {
+            console.log('✅ 后端响应:', response);
+            this.submitting = false;
+            if (response.success) {
+              alert('Event updated successfully!');
+              this.router.navigate(['/events']);
+            } else {
+              alert('Failed to update event: ' + (response.message || 'Unknown error'));
+            }
+          },
+          error: (error: any) => {
+            console.error('❌ 事件更新失败:', error);
+            this.submitting = false;
+            alert('Error updating event: ' + error.message);
           }
-        },
-        error: (error: any) => {
-          console.error('❌ 事件更新失败:', error);
-          this.submitting = false;
-          alert('Error updating event: ' + error.message);
-        }
-      });
+        });
+      } else {
+        this.eventService.createEvent(eventData).subscribe({
+          next: (response: any) => {
+            console.log('✅ 后端响应:', response);
+            this.submitting = false;
+            if (response.success) {
+              alert('Event created successfully!');
+              this.router.navigate(['/events']);
+            } else {
+              alert('Failed to create event: ' + (response.message || 'Unknown error'));
+            }
+          },
+          error: (error: any) => {
+            console.error('❌ 事件创建失败:', error);
+            this.submitting = false;
+            alert('Error creating event: ' + error.message);
+          }
+        });
+      }
     } else {
-      // 创建模式：调用创建API
-      this.eventService.createEvent(eventData).subscribe({
-        next: (response: any) => {
-          console.log('✅ 事件创建成功:', response);
-          this.submitting = false;
-          if (response.success) {
-            alert('Event created successfully!');
-            this.router.navigate(['/events']);
-          } else {
-            alert('Failed to create event: ' + (response.message || 'Unknown error'));
-          }
-        },
-        error: (error: any) => {
-          console.error('❌ 事件创建失败:', error);
-          this.submitting = false;
-          alert('Error creating event: ' + error.message);
-        }
-      });
+      this.markFormGroupTouched();
+      alert('Please fill in all required fields correctly.');
     }
-    
-  } else {
-    this.markFormGroupTouched();
-    alert('Please fill in all required fields correctly.');
   }
-}
+
+  // 新增方法：将日期时间转换为数据库兼容的格式
+  formatDateTimeForDatabase(dateTimeString: string): string {
+    if (!dateTimeString) return '';
+    
+    const date = new Date(dateTimeString);
+    
+    // 格式化为: YYYY-MM-DD HH:MM:SS
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  }
 
   markFormGroupTouched(): void {
     Object.keys(this.eventForm.controls).forEach(key => {
@@ -252,12 +293,15 @@ export class EventFormComponent implements OnInit {
     });
   }
 
+  // 确保票数计算也正确处理数据
   getTotalTickets(): number {
-    return this.registrations.reduce((sum, reg) => sum + reg.ticket_quantity, 0);
-  }
-
-  getTotalRevenue(): number {
-    return this.registrations.reduce((sum, reg) => sum + reg.total_amount, 0);
+    if (!this.registrations || this.registrations.length === 0) {
+      return 0;
+    }
+    
+    return this.registrations.reduce((sum, reg) => {
+      return sum + this.ensureValidNumber(reg.ticket_quantity);
+    }, 0);
   }
 
   // 模板辅助方法
@@ -275,5 +319,84 @@ export class EventFormComponent implements OnInit {
       if (field.errors['min']) return `Value must be at least ${field.errors['min'].min}`;
     }
     return '';
+  }
+
+  // 在 event-form.component.ts 中添加/修改这些方法
+
+  // 修改 ensureValidNumber 方法，确保正确处理金额
+  ensureValidNumber(value: any): number {
+    if (value === null || value === undefined || value === '') {
+      return 0;
+    }
+    
+    // 处理字符串情况
+    if (typeof value === 'string') {
+      // 移除所有非数字字符（除了小数点和负号）
+      const cleaned = value.replace(/[^\d.-]/g, '');
+      
+      // 如果是空字符串，返回 0
+      if (cleaned === '' || cleaned === '-') {
+        return 0;
+      }
+      
+      const num = parseFloat(cleaned);
+      return isNaN(num) ? 0 : num;
+    }
+    
+    // 处理数字情况
+    const num = Number(value);
+    return isNaN(num) ? 0 : num;
+  }
+
+  // 计算总金额：活动金额 + 注册金额
+  getTotalRevenue(): number {
+    // 从表单或 event 对象获取活动金额
+    let eventAmount = 0;
+    
+    if (this.event) {
+      // 使用已加载的 event 数据
+      eventAmount = this.ensureValidNumber(this.event.current_amount);
+    } else {
+      // 使用表单中的值（创建模式）
+      eventAmount = this.ensureValidNumber(this.eventForm.get('current_amount')?.value);
+    }
+    
+    // 所有注册的总金额
+    const registrationsTotal = this.getRegistrationsRevenue();
+    
+    const total = eventAmount + registrationsTotal;
+    
+    console.log('🔢 编辑页面金额计算:', {
+      '活动金额': eventAmount,
+      '注册总金额': registrationsTotal,
+      '合计金额': total
+    });
+    
+    return total;
+  }
+
+  // 计算注册总金额
+  getRegistrationsRevenue(): number {
+    if (!this.registrations || this.registrations.length === 0) {
+      return 0;
+    }
+    
+    return this.registrations.reduce((sum, reg) => {
+      return sum + this.ensureValidNumber(reg.total_amount);
+    }, 0);
+  }
+
+  // 获取活动原始金额
+  getEventCurrentAmount(): number {
+    if (this.event) {
+      return this.ensureValidNumber(this.event.current_amount);
+    } else {
+      return this.ensureValidNumber(this.eventForm.get('current_amount')?.value);
+    }
+  }
+
+  // 获取注册总金额（单独显示）
+  getRegistrationsTotal(): number {
+    return this.getRegistrationsRevenue();
   }
 }

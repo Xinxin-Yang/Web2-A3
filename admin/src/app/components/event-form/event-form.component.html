@@ -170,6 +170,7 @@
     <div class="form-section">
       <h3>💰 Fundraising Goals</h3>
       
+      <!-- 在 event-form.component.html 中修改金额输入框 -->
       <div class="form-row">
         <div class="form-group">
           <label for="goal_amount">Fundraising Goal (AUD)</label>
@@ -219,7 +220,7 @@
       </div>
     </div>
 
-        <!-- 注册数据概览 (仅在编辑模式显示) -->
+    <!-- 注册数据概览 (仅在编辑模式显示) -->
     <div *ngIf="isEditMode" class="form-section">
       <h3>👥 Registration Overview</h3>
       
@@ -252,6 +253,10 @@
               <div class="stat-info">
                 <h4>{{ formatCurrency(getTotalRevenue()) }}</h4>
                 <p>Total Revenue</p>
+                <small>
+                  Event: {{ formatCurrency(getEventCurrentAmount()) }} + 
+                  Registrations: {{ formatCurrency(getRegistrationsTotal()) }}
+                </small>
               </div>
             </div>
           </div>

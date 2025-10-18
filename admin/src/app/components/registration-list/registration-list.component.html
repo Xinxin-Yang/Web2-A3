@@ -34,30 +34,34 @@
   <!-- 内容 -->
   <div *ngIf="!loading && !error" class="registrations-content">
     
-    <!-- 摘要卡片 -->
-    <div class="summary-cards">
-      <div class="summary-card">
-        <div class="summary-icon">👥</div>
-        <div class="summary-info">
-          <h3>{{ registrations.length }}</h3>
-          <p>Total Registrations</p>
-        </div>
-      </div>
-      <div class="summary-card">
-        <div class="summary-icon">🎫</div>
-        <div class="summary-info">
-          <h3>{{ getTotalTickets() }}</h3>
-          <p>Total Tickets</p>
-        </div>
-      </div>
-      <div class="summary-card">
-        <div class="summary-icon">💰</div>
-        <div class="summary-info">
-          <h3>{{ formatCurrency(getTotalRevenue()) }}</h3>
-          <p>Total Revenue</p>
-        </div>
+  <!-- 摘要卡片 -->
+  <div class="summary-cards">
+    <div class="summary-card">
+      <div class="summary-icon">👥</div>
+      <div class="summary-info">
+        <h3>{{ registrations.length }}</h3>
+        <p>Total Registrations</p>
       </div>
     </div>
+    <div class="summary-card">
+      <div class="summary-icon">🎫</div>
+      <div class="summary-info">
+        <h3>{{ getTotalTickets() }}</h3>
+        <p>Total Tickets</p>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-icon">💰</div>
+      <div class="summary-info">
+        <h3>{{ formatCurrency(getTotalRevenue()) }}</h3>
+        <p>Total Revenue</p>
+        <small>
+          Event: {{ formatCurrency(getEventCurrentAmount()) }} + 
+          Registrations: {{ formatCurrency(getRegistrationsRevenue()) }}
+        </small>
+      </div>
+    </div>
+  </div>
 
     <!-- 控制行 -->
     <div class="controls-row">
