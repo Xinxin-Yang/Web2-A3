@@ -227,68 +227,77 @@ router.delete('/events/:id', async (req, res) => {
 });
 
 // 用户注册事件
-router.post('/registrations', async (req, res) => {
+router.get('/registrations', async (req, res) => {
   try {
-    const {
-      event_id,
-      full_name,
-      email,
-      phone,
-      ticket_quantity
-    } = req.body;
-
-    // 验证必填字段
-    if (!event_id || !full_name || !email || !ticket_quantity) {
-      return res.status(400).json({
-        success: false,
-        message: 'Missing required fields'
-      });
-    }
-
-    // 获取事件信息计算总金额
-    const eventSql = 'SELECT ticket_price FROM events WHERE id = ? AND is_active = 1';
-    const eventResult = await query(eventSql, [event_id]);
-    
-    if (eventResult.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Event not found or inactive'
-      });
-    }
-
-    const ticketPrice = eventResult[0].ticket_price;
-    const totalAmount = ticketPrice * ticket_quantity;
-
     const sql = `
-      INSERT INTO registrations (
-        event_id, full_name, email, phone, ticket_quantity, total_amount
-      ) VALUES (?, ?, ?, ?, ?, ?)
+      SELECT 
+        r.*,
+        e.name as event_name,
+        e.date_time as event_date,
+        e.location as event_location
+      FROM registrations r
+      JOIN events e ON r.event_id = e.id
+      ORDER BY r.registration_date DESC
     `;
-
-    const params = [
-      event_id,
-      full_name,
-      email,
-      phone,
-      ticket_quantity,
-      totalAmount
-    ];
-
-    const result = await query(sql, params);
+    
+    const registrations = await query(sql);
     
     res.json({
       success: true,
-      message: 'Registration successful',
-      data: { 
-        id: result.insertId,
-        total_amount: totalAmount
+      data: registrations
+    });
+  } catch (error) {
+    console.error('Error fetching all registrations:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch registrations',
+      error: error.message
+    });
+  }
+});
+
+// 获取注册统计信息
+router.get('/registrations/stats', async (req, res) => {
+  try {
+    const statsSql = `
+      SELECT 
+        COUNT(*) as total_registrations,
+        COALESCE(SUM(ticket_quantity), 0) as total_tickets,
+        COALESCE(SUM(total_amount), 0) as total_revenue
+      FROM registrations
+    `;
+    
+    const recentSql = `
+      SELECT 
+        r.*,
+        e.name as event_name
+      FROM registrations r
+      JOIN events e ON r.event_id = e.id
+      ORDER BY r.registration_date DESC
+      LIMIT 10
+    `;
+    
+    const [statsResult, recentRegistrations] = await Promise.all([
+      query(statsSql),
+      query(recentSql)
+    ]);
+    
+    const stats = statsResult[0];
+    
+    res.json({
+      success: true,
+      data: {
+        total_registrations: stats.total_registrations,
+        total_tickets: stats.total_tickets,
+        total_revenue: stats.total_revenue,
+        recent_registrations: recentRegistrations
       }
     });
   } catch (error) {
-    console.error('Error creating registration:', error);
+    console.error('Error fetching registration stats:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to register for event',
+      message: 'Failed to fetch registration statistics',
       error: error.message
     });
   }
