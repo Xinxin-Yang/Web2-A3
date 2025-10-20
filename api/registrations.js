@@ -2,6 +2,59 @@ const express = require('express');
 const { query } = require('./database/event_db');
 const router = express.Router();
 
+
+
+
+// 在 registrations.js 文件的开头或其他路由之前添加：
+
+// GET /api/registrations 根路径
+router.get('/', async (req, res) => {
+    try {
+        res.json({
+            success: true,
+            message: 'Registrations API is working',
+            availableEndpoints: [
+                'POST / - Create new registration',
+                'GET /event/:eventId - Get event registrations',
+                'GET /check-email - Check if email is registered',
+                'GET /event/:eventId/availability - Check event availability'
+            ],
+            usage: {
+                createRegistration: {
+                    method: 'POST',
+                    url: '/api/registrations',
+                    body: {
+                        event_id: 'number (required)',
+                        full_name: 'string (required)',
+                        email: 'string (required)',
+                        ticket_quantity: 'number (required)',
+                        phone: 'string (optional)'
+                    }
+                },
+                getEventRegistrations: {
+                    method: 'GET', 
+                    url: '/api/registrations/event/:eventId'
+                },
+                checkEmail: {
+                    method: 'GET',
+                    url: '/api/registrations/check-email?event_id=:eventId&email=:email'
+                },
+                checkAvailability: {
+                    method: 'GET',
+                    url: '/api/registrations/event/:eventId/availability'
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error in registrations root route:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error',
+            error: error.message
+        });
+    }
+});
+
 // 创建新注册
 router.post('/', async (req, res) => {
     try {
@@ -221,7 +274,7 @@ router.get('/check-email', async (req, res) => {
     }
 });
 
-// 获取活动可用票数
+// 获取活动可用票数 - 修复版本
 router.get('/event/:eventId/availability', async (req, res) => {
     try {
         const eventId = req.params.eventId;
@@ -230,11 +283,12 @@ router.get('/event/:eventId/availability', async (req, res) => {
             SELECT 
                 e.max_attendees,
                 e.date_time,
+                e.is_active,
                 COALESCE(SUM(r.ticket_quantity), 0) as registered_tickets
             FROM events e
             LEFT JOIN registrations r ON e.id = r.event_id
             WHERE e.id = ?
-            GROUP BY e.id, e.max_attendees, e.date_time
+            GROUP BY e.id, e.max_attendees, e.date_time, e.is_active
         `;
         
         const result = await query(sql, [eventId]);
@@ -247,21 +301,37 @@ router.get('/event/:eventId/availability', async (req, res) => {
         }
         
         const event = result[0];
-        const availableTickets = event.max_attendees ? event.max_attendees - event.registered_tickets : null;
+        
+        // 修复：将字符串转换为数字
+        const registeredTickets = parseInt(event.registered_tickets) || 0;
+        const maxAttendees = event.max_attendees ? parseInt(event.max_attendees) : null;
+        
+        const availableTickets = maxAttendees ? maxAttendees - registeredTickets : null;
         
         // 检查活动是否已过期
         const now = new Date();
         const eventDate = new Date(event.date_time);
         const isPastEvent = eventDate < now;
         
+        // 修复逻辑：活动可用的条件
+        // 1. 活动是活跃状态 (is_active = 1)
+        // 2. 活动未过期
+        // 3. 如果没有人数限制 或者 有可用票数
+        const isAvailable = event.is_active === 1 && 
+                           !isPastEvent && 
+                           (maxAttendees === null || availableTickets > 0);
+        
         res.json({
             success: true,
             data: {
-                max_attendees: event.max_attendees,
-                registered_tickets: event.registered_tickets,
+                max_attendees: maxAttendees,
+                registered_tickets: registeredTickets,
                 available_tickets: availableTickets,
-                is_available: (availableTickets === null || availableTickets > 0) && !isPastEvent,
-                is_past_event: isPastEvent
+                is_available: isAvailable,
+                is_past_event: isPastEvent,
+                is_active: event.is_active === 1,
+                event_date: event.date_time,
+                current_time: now.toISOString()
             }
         });
     } catch (error) {
